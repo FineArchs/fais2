@@ -1,6 +1,7 @@
 {
   "type": "module",
-  "name": "aiscript-playground",
+  "private": true,
+  "name": "faiscript-playground",
   "version": "0.0.0",
   "scripts": {
     "dev": "bun ./index.html",
@@ -8,7 +9,7 @@
     "serve": "bun ./serve.ts"
   },
   "dependencies": {
-    "@syuilo/aiscript": "file:..",
+    "@finearchs/faiscript": "file:..",
     "prismjs": "^1.30.0",
     "vue": "^3.5.11",
     "vue-prism-editor": "^2.0.0-alpha.2"

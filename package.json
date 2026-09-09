@@ -5,17 +5,11 @@
 	"workspaces": [
 		"playground"
 	],
-	"name": "@syuilo/aiscript",
-	"version": "1.3.0",
-	"description": "AiScript implementation",
-	"author": "syuilo <syuilotan@yahoo.co.jp>",
+	"name": "@finearchs/faiscript",
+	"version": "0.0.0",
+	"description": "An AiScript Fork by FineArchs",
+	"author": "FineArchs",
 	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/syuilo/aiscript.git"
-	},
-	"homepage": "https://aiscript-dev.github.io/",
-	"bugs": "https://github.com/syuilo/aiscript/issues",
 	"exports": {
 		".": "./built/index.js",
 		"./*": "./built/*"

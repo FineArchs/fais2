@@ -11,7 +11,11 @@ import type { Value } from '../value.js';
 export const std: Record<string, Value> = {
 	...stdMath,
 
-	'help': STR('SEE: https://aiscript-dev.github.io/guides/get-started.html'),
+	'help': STR([
+		'FaiScript documentation is not currently available.',
+		'The original AiScript documentation may be helpful:',
+		'https://aiscript-dev.github.io/guides/get-started.html',
+	].join('\n')),
 
 	//#region Core
 	'Core:v': STR(AISCRIPT_VERSION),

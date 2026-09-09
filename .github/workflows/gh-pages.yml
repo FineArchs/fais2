@@ -3,7 +3,7 @@ name: GitHub Pages
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
 
 jobs:
@@ -22,10 +22,10 @@ jobs:
       - name: Install dependencies
         run: bun ci
 
-      - name: AiScript Build
+      - name: Build FaiScript
         run: bun run build
 
-      - name: Playground Build
+      - name: Build Playground
         run: bun run build
         working-directory: ./playground
 

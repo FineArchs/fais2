@@ -1,7 +1,7 @@
 import fs from 'fs';
 import * as readline from 'readline';
 import chalk from 'chalk';
-import { Parser, Interpreter, errors, utils } from '@syuilo/aiscript';
+import { Parser, Interpreter, errors, utils } from '@finearchs/faiscript';
 const { AiScriptError } = errors;
 const { valToString } = utils;
 

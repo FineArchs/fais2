@@ -52,8 +52,8 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import { AISCRIPT_VERSION, Interpreter, Parser, utils } from '@syuilo/aiscript';
-import { std } from '@syuilo/aiscript/interpreter/lib/std';
+import { AISCRIPT_VERSION, Interpreter, Parser, utils } from '@finearchs/faiscript';
+import { std } from '@finearchs/faiscript/interpreter/lib/std';
 
 import { PrismEditor } from 'vue-prism-editor';
 import 'vue-prism-editor/dist/prismeditor.min.css';

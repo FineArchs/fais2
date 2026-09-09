@@ -1,6 +1,6 @@
 import * as readline from 'readline/promises';
 import chalk from 'chalk';
-import { errors, Parser, Interpreter, utils } from '@syuilo/aiscript';
+import { errors, Parser, Interpreter, utils } from '@finearchs/faiscript';
 const { valToString } = utils;
 
 const i = readline.createInterface({
@@ -9,9 +9,7 @@ const i = readline.createInterface({
 });
 
 console.log(
-`Welcome to AiScript!
-https://github.com/syuilo/aiscript
-
+`Welcome to FaiScript!
 Type '.exit' to end this session.`);
 
 const interpreter = new Interpreter({}, {

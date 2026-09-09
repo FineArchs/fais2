@@ -1,1 +1,0 @@
-- Fix: `Math:gen_rng`の`seed`に`null`を与えてもエラーが発生しない問題を修正

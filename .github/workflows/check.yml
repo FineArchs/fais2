@@ -1,4 +1,4 @@
-name: Test
+name: Check (Typecheck & Test & Lint)
 
 on:
   push:
@@ -8,8 +8,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-
+  check:
+    strategy:
+      matrix:
+        command:
+          - typecheck
+          - test
+          - lint
     runs-on: ubuntu-latest
 
     steps:
@@ -27,7 +32,5 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: Test
-        run: bun run test
-        env:
-          CI: true
+      - name: ${{ matrix.command }}
+        run: bun run ${{ matrix.command }}

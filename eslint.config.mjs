@@ -164,4 +164,15 @@ export default defineConfig([
 			},
 		},
 	},
+
+	{
+		extends: tsRules,
+		files: ["scripts/**/*.ts"],
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+				project: ["./tsconfig.scripts.json"],
+			},
+		},
+	},
 ]);

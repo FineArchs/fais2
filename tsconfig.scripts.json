@@ -1,0 +1,15 @@
+{
+	"$schema": "http://json.schemastore.org/tsconfig",
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"declaration": false,
+		"declarationMap": false,
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"noEmit": true,
+		"rootDir": ".",
+		"skipLibCheck": true,
+		"sourceMap": false
+	},
+	"include": ["./scripts/**/*.ts"]
+}

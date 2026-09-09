@@ -1,5 +1,5 @@
-import fs from 'fs';
-import * as readline from 'readline';
+import fs from 'node:fs';
+import * as readline from 'node:readline';
 import chalk from 'chalk';
 import { Parser, Interpreter, errors, utils } from '@finearchs/faiscript';
 const { AiScriptError } = errors;
@@ -7,7 +7,7 @@ const { valToString } = utils;
 
 const i = readline.createInterface({
 	input: process.stdin,
-	output: process.stdout
+	output: process.stdout,
 });
 
 const interpreter = new Interpreter({}, {
@@ -36,7 +36,7 @@ const interpreter = new Interpreter({}, {
 			default: break;
 		}
 		*/
-	}
+	},
 });
 
 const script = fs.readFileSync('./main.ais', 'utf8');
@@ -47,7 +47,7 @@ try {
 	if (e instanceof AiScriptError) {
 		console.log(chalk.red(`${e}`));
 	} else {
-		throw e
+		throw e;
 	}
 }
 i.close();

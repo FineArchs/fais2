@@ -9,7 +9,7 @@ import type * as Ast from '../../node.js';
 import type { ITokenStream } from '../streams/token-stream.js';
 
 export function parseStatement(s: ITokenStream): Ast.Statement | Ast.Expression {
-	const startPos = s.getPos();
+	// const startPos = s.getPos();
 
 	switch (s.getTokenKind()) {
 		case TokenKind.VarKeyword:

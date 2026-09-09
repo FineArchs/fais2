@@ -414,8 +414,8 @@ const PRIMITIVE_PROPS: {
 			return ARR(result);
 		}),
 
-		flat: (target: VArr): VFn => FN_NATIVE(([depth], opts) => {
-			depth = depth ?? NUM(1);
+		flat: (target: VArr): VFn => FN_NATIVE(([depth_], opts) => {
+			const depth = depth_ ?? NUM(1);
 			assertNumber(depth);
 			if (!Number.isInteger(depth.value)) throw new AiScriptRuntimeError('arr.flat expected integer, got non-integer');
 			if (depth.value < 0) throw new AiScriptRuntimeError('arr.flat expected non-negative number, got negative');

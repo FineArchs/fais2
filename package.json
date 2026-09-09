@@ -15,9 +15,7 @@
 		"./*": "./built/*"
 	},
 	"scripts": {
-		"start": "bun ./scripts/start.ts",
-		"parse": "bun ./scripts/parse.ts",
-		"repl": "bun ./scripts/repl.ts",
+		"start": "bun ./scripts/exec.ts",
 		"build": "bun scripts/gen-pkg-ts.ts && tsc",
 		"typecheck": "bun run build && tsc --project tsconfig.test.json && tsc --project tsconfig.scripts.json",
 		"lint": "eslint .",

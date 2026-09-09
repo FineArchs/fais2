@@ -14,37 +14,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6.0.0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6.0.0
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20.x
-
-      - name: AiScript Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: npm-${{ hashFiles('package-lock.json') }}
-          restore-keys: npm-
-
-      - name: AiScript Install dependencies
-        run: npm ci
-
-      - name: AiScript Build
-        run: npm run build
-
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: npm-playground-${{ hashFiles('playground/package-lock.json') }}
-          restore-keys: npm-playground-
+          bun-version: 1.4.0
 
       - name: Install dependencies
-        run: npm ci
-        working-directory: ./playground
+        run: bun ci
 
-      - name: Build
-        run: npm run build
+      - name: AiScript Build
+        run: bun run build
+
+      - name: Playground Build
+        run: bun run build
         working-directory: ./playground
 
       - name: Deploy

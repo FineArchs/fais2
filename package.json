@@ -1,6 +1,10 @@
 {
 	"type": "module",
 	"private": true,
+	"packageManager": "bun@1.4.0",
+	"workspaces": [
+		"playground"
+	],
 	"name": "@syuilo/aiscript",
 	"version": "1.3.0",
 	"description": "AiScript implementation",
@@ -17,16 +21,16 @@
 		"./*": "./built/*"
 	},
 	"scripts": {
-		"start": "node ./scripts/start.mjs",
-		"parse": "node ./scripts/parse.mjs",
-		"repl": "node ./scripts/repl.mjs",
-		"build": "node scripts/gen-pkg-ts.mjs && tsc",
+		"start": "bun ./scripts/start.mjs",
+		"parse": "bun ./scripts/parse.mjs",
+		"repl": "bun ./scripts/repl.mjs",
+		"build": "bun scripts/gen-pkg-ts.mjs && tsc",
 		"lint": "eslint .",
 		"test": "vitest run"
 	},
 	"devDependencies": {
 		"@eslint/js": "9.32.0",
-		"@types/node": "24.2.0",
+		"@types/bun": "1.4.2",
 		"@types/seedrandom": "3.0.8",
 		"chalk": "5.5.0",
 		"eslint": "9.32.0",
@@ -42,4 +46,3 @@
 		"uuid": "11.1.0"
 	}
 }
-

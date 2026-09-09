@@ -1,5 +1,5 @@
-import { decodeUnicodeEscapeSequence, isHighSurrogate, isLowSurrogate, isSurrogatePair } from '../src/utils/characters';
 import { describe, expect, test } from 'vitest';
+import { decodeUnicodeEscapeSequence, isHighSurrogate, isLowSurrogate, isSurrogatePair } from '../src/utils/characters';
 
 describe('isHighSurrogate', () => {
 	const cases: [string, boolean][] = [

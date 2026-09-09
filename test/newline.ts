@@ -1,10 +1,9 @@
-import { describe, test } from "vitest";
-import { utils } from '../src';
-import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
-import { exe, getMeta, eq } from './testutils';
+import { describe, test } from 'vitest';
+import { NUM, NULL, ARR, OBJ, BOOL } from '../src/interpreter/value';
+import { exe, eq } from './testutils';
 
 describe('empty lines', () => {
-    describe('match', () => {
+	describe('match', () => {
 		test.concurrent('empty line', async () => {
 			const res = await exe(`
 			<: match 1 {
@@ -53,9 +52,9 @@ describe('empty lines', () => {
 			`);
 			eq(res, NUM(1));
 		});
-    });
+	});
 
-    describe('call', () => {
+	describe('call', () => {
 		test.concurrent('empty line', async () => {
 			const res = await exe(`
 			@f() {
@@ -93,12 +92,12 @@ describe('empty lines', () => {
 			`);
 			eq(res, NUM(1));
 		});
-    });
+	});
 
-    describe('type params', () => {
-        describe('function', () => {
-            test.concurrent('empty line before', async () => {
-                const res = await exe(`
+	describe('type params', () => {
+		describe('function', () => {
+			test.concurrent('empty line before', async () => {
+				const res = await exe(`
                 @f<
                     // comment
                     T
@@ -107,11 +106,11 @@ describe('empty lines', () => {
                 }
                 <: f(1)
                 `);
-                eq(res, NUM(1));
-            });
+				eq(res, NUM(1));
+			});
 
-            test.concurrent('empty line after', async () => {
-                const res = await exe(`
+			test.concurrent('empty line after', async () => {
+				const res = await exe(`
                 @f<
                     T
                     // comment
@@ -120,13 +119,13 @@ describe('empty lines', () => {
                 }
                 <: f(1)
                 `);
-                eq(res, NUM(1));
-            });
-        });
+				eq(res, NUM(1));
+			});
+		});
 
-        describe('function type', () => {
-            test.concurrent('empty line before', async () => {
-                const res = await exe(`
+		describe('function type', () => {
+			test.concurrent('empty line before', async () => {
+				const res = await exe(`
                 let f: @<
                     // comment
                     T
@@ -135,11 +134,11 @@ describe('empty lines', () => {
                 }
                 <: f(1)
                 `);
-                eq(res, NUM(1));
-            });
+				eq(res, NUM(1));
+			});
 
-            test.concurrent('empty line after', async () => {
-                const res = await exe(`
+			test.concurrent('empty line after', async () => {
+				const res = await exe(`
                 let f: @<
                     T
                     // comment
@@ -148,12 +147,12 @@ describe('empty lines', () => {
                 }
                 <: f(1)
                 `);
-                eq(res, NUM(1));
-            });
-        });
-    });
+				eq(res, NUM(1));
+			});
+		});
+	});
 
-    describe('function params', () => {
+	describe('function params', () => {
 		test.concurrent('empty line', async () => {
 			const res = await exe(`
 			@f(
@@ -191,11 +190,11 @@ describe('empty lines', () => {
 			`);
 			eq(res, NUM(1));
 		});
-    });
+	});
 
-    describe('if', () => {
-        test.concurrent('empty line between if ~ elif', async () => {
-            const res = await exe(`
+	describe('if', () => {
+		test.concurrent('empty line between if ~ elif', async () => {
+			const res = await exe(`
             <: if true {
                 1
             }
@@ -204,11 +203,11 @@ describe('empty lines', () => {
                 2
             }
             `);
-            eq(res, NUM(1));
-        });
+			eq(res, NUM(1));
+		});
 
-        test.concurrent('empty line between if ~ elif ~ elif', async () => {
-            const res = await exe(`
+		test.concurrent('empty line between if ~ elif ~ elif', async () => {
+			const res = await exe(`
             <: if true {
                 1
             }
@@ -221,11 +220,11 @@ describe('empty lines', () => {
                 3
             }
             `);
-            eq(res, NUM(1));
-        });
+			eq(res, NUM(1));
+		});
 
-        test.concurrent('empty line between if ~ else', async () => {
-            const res = await exe(`
+		test.concurrent('empty line between if ~ else', async () => {
+			const res = await exe(`
             <: if true {
                 1
             }
@@ -234,11 +233,11 @@ describe('empty lines', () => {
                 2
             }
             `);
-            eq(res, NUM(1));
-        });
+			eq(res, NUM(1));
+		});
 
-        test.concurrent('empty line between if ~ elif ~ else', async () => {
-            const res = await exe(`
+		test.concurrent('empty line between if ~ elif ~ else', async () => {
+			const res = await exe(`
             <: if true {
                 1
             }
@@ -251,130 +250,130 @@ describe('empty lines', () => {
                 3
             }
             `);
-            eq(res, NUM(1));
-        });
-    });
+			eq(res, NUM(1));
+		});
+	});
 
-    describe('unary operation', () => {
-        test.concurrent('empty line after', async () => {
-            const res = await exe(`
+	describe('unary operation', () => {
+		test.concurrent('empty line after', async () => {
+			const res = await exe(`
             ! \\
             // comment
             true
             `);
-            eq(res, BOOL(false));
-        });
-    });
+			eq(res, BOOL(false));
+		});
+	});
 
-    describe('binary operation', () => {
-        test.concurrent('empty line before', async () => {
-            const res = await exe(`
+	describe('binary operation', () => {
+		test.concurrent('empty line before', async () => {
+			const res = await exe(`
             <: 2 \\
             // comment
             * 3
             `);
-            eq(res, NUM(6));
-        });
-    });
+			eq(res, NUM(6));
+		});
+	});
 
-    describe('binary operation', () => {
-        test.concurrent('empty line after', async () => {
-            const res = await exe(`
+	describe('binary operation', () => {
+		test.concurrent('empty line after', async () => {
+			const res = await exe(`
             <: 2 * \\
             // comment
             3
             `);
-            eq(res, NUM(6));
-        });
-    });
+			eq(res, NUM(6));
+		});
+	});
 
-    describe('variable definition', () => {
-        test.concurrent('empty line after equal', async () => {
-            const res = await exe(`
+	describe('variable definition', () => {
+		test.concurrent('empty line after equal', async () => {
+			const res = await exe(`
             let a =
             // comment
             1
             <: a
             `);
-            eq(res, NUM(1));
-        });
-    });
+			eq(res, NUM(1));
+		});
+	});
 
-    describe('attribute', () => {
-        test.concurrent('empty line after', async () => {
-            const res = await exe(`
+	describe('attribute', () => {
+		test.concurrent('empty line after', async () => {
+			const res = await exe(`
             #[abc]
             // comment
             let a = 1
             <: a
             `);
-            eq(res, NUM(1));
-        });
-    });
+			eq(res, NUM(1));
+		});
+	});
 
-    describe('obj literal', () => {
-        test.concurrent('empty line', async () => {
-            const res = await exe(`
+	describe('obj literal', () => {
+		test.concurrent('empty line', async () => {
+			const res = await exe(`
             <: {
                 // comment
             }
             `);
-            eq(res, OBJ(new Map()));
-        });
+			eq(res, OBJ(new Map()));
+		});
 
-        test.concurrent('empty line before', async () => {
-            const res = await exe(`
+		test.concurrent('empty line before', async () => {
+			const res = await exe(`
             let x = {
                 // comment
                 a: 1
             }
             <: x.a
             `);
-            eq(res, NUM(1));
-        });
+			eq(res, NUM(1));
+		});
 
-        test.concurrent('empty line after', async () => {
-            const res = await exe(`
+		test.concurrent('empty line after', async () => {
+			const res = await exe(`
             let x = {
                 a: 1
                 // comment
             }
             <: x.a
             `);
-            eq(res, NUM(1));
-        });
-    });
+			eq(res, NUM(1));
+		});
+	});
 
-    describe('arr literal', () => {
-        test.concurrent('empty line', async () => {
-            const res = await exe(`
+	describe('arr literal', () => {
+		test.concurrent('empty line', async () => {
+			const res = await exe(`
             <: [
                 // comment
             ]
             `);
-            eq(res, ARR([]));
-        });
+			eq(res, ARR([]));
+		});
 
-        test.concurrent('empty line before', async () => {
-            const res = await exe(`
+		test.concurrent('empty line before', async () => {
+			const res = await exe(`
             let x = [
                 // comment
                 1
             ]
             <: x[0]
             `);
-            eq(res, NUM(1));
-        });
+			eq(res, NUM(1));
+		});
 
-        test.concurrent('empty line after', async () => {
-            const res = await exe(`
+		test.concurrent('empty line after', async () => {
+			const res = await exe(`
             let x = [
                 1
                 // comment
             ]
             <: x[0]
             `);
-            eq(res, NUM(1));
-        });
-    });
+			eq(res, NUM(1));
+		});
+	});
 });

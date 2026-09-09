@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import { describe, expect, test } from 'vitest';
 import { utils } from '../src';
-import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
+import { NUM, STR, NULL, ARR, BOOL } from '../src/interpreter/value';
 import { AiScriptRuntimeError, AiScriptUnexpectedEOFError } from '../src/error';
 import { exe, getMeta, eq } from './testutils';
 
@@ -464,7 +464,6 @@ describe('separator', () => {
 		});
 	});
 });
-
 
 describe('Comment', () => {
 	test.concurrent('single line comment', async () => {
@@ -992,7 +991,7 @@ describe('meta', () => {
 				a: 1,
 				b: 2,
 				c: 3,
-			}]
+			}],
 		]));
 		expect(res!.get(null)).toStrictEqual({
 			a: 1,
@@ -1007,7 +1006,7 @@ describe('meta', () => {
 			### x "hoge"
 			`);
 			expect(res).toStrictEqual(new Map([
-				['x', 'hoge']
+				['x', 'hoge'],
 			]));
 		});
 	});
@@ -1018,7 +1017,7 @@ describe('meta', () => {
 			### x 42
 			`);
 			expect(res).toStrictEqual(new Map([
-				['x', 42]
+				['x', 42],
 			]));
 		});
 	});
@@ -1029,7 +1028,7 @@ describe('meta', () => {
 			### x true
 			`);
 			expect(res).toStrictEqual(new Map([
-				['x', true]
+				['x', true],
 			]));
 		});
 	});
@@ -1040,7 +1039,7 @@ describe('meta', () => {
 			### x null
 			`);
 			expect(res).toStrictEqual(new Map([
-				['x', null]
+				['x', null],
 			]));
 		});
 	});
@@ -1051,7 +1050,7 @@ describe('meta', () => {
 			### x [1, 2, 3]
 			`);
 			expect(res).toStrictEqual(new Map([
-				['x', [1, 2, 3]]
+				['x', [1, 2, 3]],
 			]));
 		});
 
@@ -1078,7 +1077,7 @@ describe('meta', () => {
 					a: 1,
 					b: 2,
 					c: 3,
-				}]
+				}],
 			]));
 		});
 
@@ -1259,8 +1258,8 @@ describe('operators', () => {
 
 				<: tmp
 			`),
-			NULL
-		)
+			NULL,
+		);
 
 		eq(
 			await exe(`
@@ -1275,8 +1274,8 @@ describe('operators', () => {
 
 				<: tmp
 			`),
-			BOOL(true)
-		)
+			BOOL(true),
+		);
 
 		assert.fail();
 	});
@@ -1307,8 +1306,8 @@ describe('operators', () => {
 
 				<: tmp
 			`),
-			NULL
-		)
+			NULL,
+		);
 
 		eq(
 			await exe(`
@@ -1323,8 +1322,8 @@ describe('operators', () => {
 
 				<: tmp
 			`),
-			BOOL(true)
-		)
+			BOOL(true),
+		);
 
 		assert.fail();
 	});
@@ -1392,7 +1391,6 @@ describe('operators', () => {
 		eq(await exe('<: 1>-1'), BOOL(true));
 		eq(await exe('<: -1<1'), BOOL(true));
 	});
-
 });
 
 describe('plus', () => {
@@ -1402,8 +1400,8 @@ describe('plus', () => {
 		<: +a
 		`);
 		eq(res, NUM(1));
-	})
-})
+	});
+});
 
 describe('minus', () => {
 	test.concurrent('Basic', async () => {
@@ -1412,8 +1410,8 @@ describe('minus', () => {
 		<: -a
 		`);
 		eq(res, NUM(-1));
-	})
-})
+	});
+});
 
 describe('not', () => {
 	test.concurrent('Basic', async () => {
@@ -1497,7 +1495,7 @@ describe('Infix expression', () => {
 				}
 				<: Hoge:add(1, 2)
 			`),
-			NUM(3)
+			NUM(3),
 		);
 	});
 });

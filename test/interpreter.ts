@@ -1,10 +1,10 @@
 import * as assert from 'assert';
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
-import { Parser, Interpreter, values, errors, utils, Ast } from '../src';
-import { FALSE, NUM, OBJ, STR, TRUE, Value } from '../src/interpreter/value';
-
-let { FN_NATIVE } = values;
-let { AiScriptRuntimeError, AiScriptIndexOutOfRangeError, AiScriptHostsideError } = errors;
+import { Parser, Interpreter, utils } from '../src';
+import { AiScriptHostsideError } from '../src/error';
+import { FALSE, NUM, OBJ, STR, TRUE, FN_NATIVE } from '../src/interpreter/value';
+import type { Ast } from '../src';
+import type { Value } from '../src/interpreter/value';
 
 describe('Scope', () => {
 	test.concurrent('getAll', async () => {
@@ -32,7 +32,7 @@ describe('Scope', () => {
 describe('error handler', () => {
 	test.concurrent('error from outside caller', async () => {
 		let outsideCaller: () => Promise<void> = async () => {};
-		let errCount: number = 0;
+		let errCount = 0;
 		const aiscript = new Interpreter({
 			emitError: FN_NATIVE((_args, _opts) => {
 				throw Error('emitError');
@@ -44,7 +44,7 @@ describe('error handler', () => {
 				};
 			}),
 		}, {
-			err(e) { /*console.log(e.toString());*/ errCount++ },
+			err(e) { /*console.log(e.toString());*/ errCount++; },
 		});
 		await aiscript.exec(Parser.parse(`
 		genOutsideCaller(emitError)
@@ -55,9 +55,9 @@ describe('error handler', () => {
 	});
 
 	test.concurrent('array.map calls the handler just once', async () => {
-		let errCount: number = 0;
+		let errCount = 0;
 		const aiscript = new Interpreter({}, {
-			err(e) { errCount++ },
+			err(e) { errCount++; },
 		});
 		await aiscript.exec(Parser.parse(`
 		Core:range(1,5).map(@(){ hoge })
@@ -73,7 +73,7 @@ describe('error location', () => {
 				throw Error('emitError');
 			}),
 		}, {
-			err(e) { ok(e.pos) },
+			err(e) { ok(e.pos); },
 		});
 		aiscript.exec(Parser.parse(src)).then(() => ng('error has not occured.'));
 	});
@@ -82,7 +82,7 @@ describe('error location', () => {
 		return expect(exeAndGetErrPos(`/* (の位置
 			*/
 			emitError()
-		`)).resolves.toEqual({ line: 3, column: 13});
+		`)).resolves.toEqual({ line: 3, column: 13 });
 	});
 
 	test.concurrent('No "var" in namespace declaration', async () => {
@@ -91,14 +91,14 @@ describe('error location', () => {
 				let chan = 'kawaii'
 				var kun = '!?'
 			}
-		`)).resolves.toEqual({ line: 4, column: 5});
+		`)).resolves.toEqual({ line: 4, column: 5 });
 	});
 
 	test.concurrent('Index out of range', async () => {
 		return expect(exeAndGetErrPos(`// [の位置
 			let arr = []
 			arr[0]
-		`)).resolves.toEqual({ line: 3, column: 7});
+		`)).resolves.toEqual({ line: 3, column: 7 });
 	});
 
 	test.concurrent('Error in passed function', async () => {
@@ -106,13 +106,13 @@ describe('error location', () => {
 			[1, 2, 3].map(@(v){
 				if v==1 Core:abort("error")
 			})
-		`)).resolves.toEqual({ line: 3, column: 23});
+		`)).resolves.toEqual({ line: 3, column: 23 });
 	});
 
 	test.concurrent('No such prop', async () => {
 		return expect(exeAndGetErrPos(`// .の位置
 			[].ai
-		`)).resolves.toEqual({ line: 2, column: 6});
+		`)).resolves.toEqual({ line: 2, column: 6 });
 	});
 });
 
@@ -123,7 +123,7 @@ describe('callstack', () => {
 				throw Error('emitError');
 			}),
 		}, {
-			err(e) { ok(e.message) },
+			err(e) { ok(e.message); },
 		});
 		aiscript.exec(Parser.parse(src)).then(() => ng('error has not occurred.'));
 	});
@@ -230,11 +230,11 @@ describe('IRQ', () => {
 
 		beforeEach(() => {
 			vi.useFakeTimers();
-		})
+		});
 
 		afterEach(() => {
 			vi.restoreAllMocks();
-		})
+		});
 
 		test('It ends', async () => {
 			const countSleepsSpy = vi.fn(countSleeps);
@@ -251,7 +251,7 @@ describe('IRQ', () => {
 		});
 
 		test.each(
-			[-1, NaN]
+			[-1, NaN],
 		)('Invalid number: %d', (time) => {
 			return expect(countSleeps(time)).rejects.toThrow(AiScriptHostsideError);
 		});
@@ -263,12 +263,12 @@ describe('pause', () => {
 		let count = 0;
 		
 		const interpreter = new Interpreter({
-			count: values.FN_NATIVE(() => { count++; }),
+			count: FN_NATIVE(() => { count++; }),
 		}, {});
 
 		// await to catch errors
 		await interpreter.exec(Parser.parse(
-			`Async:interval(100, @() { count() })`
+			'Async:interval(100, @() { count() })',
 		));
 
 		return {
@@ -281,11 +281,11 @@ describe('pause', () => {
 
 	beforeEach(() => {
 		vi.useFakeTimers();
-	})
+	});
 
 	afterEach(() => {
 		vi.restoreAllMocks();
-	})
+	});
 
 	test('basic', async () => {
 		const p = await exePausable();

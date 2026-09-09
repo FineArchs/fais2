@@ -1,9 +1,9 @@
 import * as assert from 'assert';
 import { describe, expect, test } from 'vitest';
-import { errors, utils } from '../src';
-import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
-import { AiScriptRuntimeError, AiScriptSyntaxError } from '../src/error';
-import { exe, getMeta, eq } from './testutils';
+import { errors } from '../src';
+import { NUM, STR, NULL, ARR, OBJ, BOOL } from '../src/interpreter/value';
+import { AiScriptSyntaxError } from '../src/error';
+import { exe, eq } from './testutils';
 
 describe('return', () => {
 	test.concurrent('as statement', async () => {
@@ -119,7 +119,7 @@ describe('return', () => {
 			<: f()
 			`);
 			eq(res, NUM(0));
-			await assert.rejects(() => exe('<: match 0 { case eval { return 0 } => {} }'))
+			await assert.rejects(() => exe('<: match 0 { case eval { return 0 } => {} }'));
 		});
 
 		test.concurrent('case a', async () => {
@@ -134,7 +134,7 @@ describe('return', () => {
 			<: f()
 			`);
 			eq(res, NUM(1));
-			await assert.rejects(() => exe('<: match 0 { case 0 => { return 1 } }'))
+			await assert.rejects(() => exe('<: match 0 { case 0 => { return 1 } }'));
 		});
 
 		test.concurrent('default', async () => {
@@ -149,7 +149,7 @@ describe('return', () => {
 			<: f()
 			`);
 			eq(res, NUM(1));
-			await assert.rejects(() => exe('<: match 0 { default => { return 1 } }'))
+			await assert.rejects(() => exe('<: match 0 { default => { return 1 } }'));
 		});
 	});
 
@@ -186,7 +186,7 @@ describe('return', () => {
 			f()('Hi')
 			`);
 			eq(res, STR('Hi'));
-			await assert.rejects(() => exe(`eval { return print }('Hello, world!')`));
+			await assert.rejects(() => exe('eval { return print }(\'Hello, world!\')'));
 		});
 
 		test.concurrent('arg', async () => {
@@ -197,7 +197,7 @@ describe('return', () => {
 			<: f()
 			`);
 			eq(res, STR('Hello, world!'));
-			await assert.rejects(() => exe(`print(eval { return 'Hello, world' })`))
+			await assert.rejects(() => exe('print(eval { return \'Hello, world\' })'));
 		});
 	});
 
@@ -246,7 +246,7 @@ describe('return', () => {
 			`);
 			eq(res, NUM(1));
 			await assert.rejects(() => exe('for 1 { return 1 }'));
-		})
+		});
 	});
 
 	describe('in each', () => {

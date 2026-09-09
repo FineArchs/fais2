@@ -1,8 +1,9 @@
 import { describe, expect, test } from 'vitest';
 import { Parser } from '../src';
 import { AiScriptSyntaxError } from '../src/error';
+import { NULL, NUM, STR } from '../src/interpreter/value';
 import { eq, exe } from './testutils';
-import { NULL, NUM, STR, Value } from '../src/interpreter/value';
+import type { Value } from '../src/interpreter/value';
 
 const reservedWords = [
 	// 使用中の語
@@ -179,25 +180,25 @@ const escapeIdentifiers: [string, string][] = [
 
 const sampleCodes = Object.entries<[(definedName: string, referredName: string) => string, Value]>({
 	variable: [(definedName, referredName) =>
-	`
+		`
 	let ${definedName} = "ai"
 	<: ${referredName}
-	`, STR("ai")],
+	`, STR('ai')],
 
 	function: [(definedName, referredName) =>
-	`
+		`
 	@${definedName}() { 'ai' }
 	<: ${referredName}()
-	`, STR("ai")],
+	`, STR('ai')],
 
 	attribute: [(definedName) =>
-	`
+		`
 	#[${definedName} 1]
 	@f() { 1 }
 	`, NULL],
 
 	namespace: [(definedName, referredName) =>
-	`
+		`
 	:: ${definedName} {
 		@f() { 1 }
 	}
@@ -205,47 +206,47 @@ const sampleCodes = Object.entries<[(definedName: string, referredName: string) 
 	`, NUM(1)],
 
 	meta: [(definedName) =>
-	`
+		`
 	### ${definedName} 1
 	`, NULL],
 
 	forBreak: [(definedName, referredName) =>
-	`
+		`
 	#${definedName}: for 1 {
 		break #${referredName}
 	}
 	`, NULL],
 
 	eachBreak: [(definedName, referredName) =>
-	`
+		`
 	#${definedName}: each let v, [0] {
 		break #${referredName}
 	}
 	`, NULL],
 
 	whileBreak: [(definedName, referredName) =>
-	`
+		`
 	#${definedName}: while false {
 		break #${referredName}
 	}
 	`, NULL],
 
 	forContinue: [(definedName, referredName) =>
-	`
+		`
 	#${definedName}: for 1 {
 		continue #${referredName}
 	}
 	`, NULL],
 
 	eachContinue: [(definedName, referredName) =>
-	`
+		`
 	#${definedName}: each let v, [0] {
 		break #${referredName}
 	}
 	`, NULL],
 
 	whileContinue: [(definedName, referredName) =>
-	`
+		`
 	var flag = true
 	#${definedName}: while flag {
 		flag = false
@@ -254,7 +255,7 @@ const sampleCodes = Object.entries<[(definedName: string, referredName: string) 
 	`, NULL],
 
 	break: [(definedName, referredName) =>
-	`
+		`
 	<: #label: eval {
 		break #label eval {
 			let ${definedName} = "ai"
@@ -264,17 +265,17 @@ const sampleCodes = Object.entries<[(definedName: string, referredName: string) 
 	`, STR('ai')],
 
 	typeParam: [(definedName, referredName) =>
-	`
+		`
 	@f<${definedName}>(x): ${referredName} { x }
 	`, NULL],
 
 	innerType: [(definedName, referredName) =>
-	`
+		`
 	let x: arr<@<${definedName}>() => ${referredName}> = []
 	`, NULL],
 
 	returnType: [(definedName, referredName) =>
-	`
+		`
 	let x: @() => @<${definedName}>() => ${referredName} = @() {}
 	`, NULL],
 });
@@ -282,17 +283,16 @@ const sampleCodes = Object.entries<[(definedName: string, referredName: string) 
 const parser = new Parser();
 
 describe.each(
-	sampleCodes
+	sampleCodes,
 )('identifier validation on %s', (_, [sampleCode, expected]) => {
-
 	test.concurrent.each(
-		reservedWords
+		reservedWords,
 	)('%s must be rejected', (word) => {
 		expect(() => parser.parse(sampleCode(word, word))).toThrow(AiScriptSyntaxError);
 	});
 
 	test.concurrent.each(
-		reservedWords
+		reservedWords,
 	)('%scat must be allowed', (word) => {
 		const wordCat = word + 'cat';
 		parser.parse(sampleCode(wordCat, wordCat));
@@ -301,7 +301,7 @@ describe.each(
 	// グローバルの expect を使用すると expect.hasAssertions() が失敗するときがあるので、
 	// ローカルの expect を使用する
 	test.concurrent.for(
-		identifierCases
+		identifierCases,
 	)('%s is allowed: %s', async ([word, allowed], { expect }) => {
 		expect.hasAssertions();
 		if (allowed) {
@@ -314,7 +314,7 @@ describe.each(
 	});
 
 	test.concurrent.each(
-		escapeIdentifiers
+		escapeIdentifiers,
 	)('escape sequence is not allowed: %s', async (word) => {
 		expect(() => parser.parse(sampleCode(word, word))).toThrow(AiScriptSyntaxError);
 	});
@@ -332,18 +332,18 @@ describe('identifier validation on obj key', () => {
 		x.${definedName} = 1
 		<: x.${referredName}
 		`],
-	]
+	];
 
 	describe.each(codes)('%s', (_, code) => {
 		test.concurrent.each(
-			reservedWords
+			reservedWords,
 		)('reserved word %s must be allowed', async (word) => {
 			const res = await exe(code(word, word));
 			eq(res, NUM(1));
 		});
 
 		test.concurrent.for(
-			identifierCases
+			identifierCases,
 		)('%s is allowed: %s', async ([word, allowed], { expect }) => {
 			expect.hasAssertions();
 			if (allowed) {
@@ -369,11 +369,11 @@ describe('reserved word validation on string obj key', () => {
 		x."${definedName}" = 1
 		<: x."${referredName}"
 		`],
-	]
+	];
 
 	describe.each(codes)('%s', (_, code) => {
 		test.concurrent.each(
-			reservedWords
+			reservedWords,
 		)('reserved word %s must be allowed', async (word) => {
 			const res = await exe(code(word, word));
 			eq(res, NUM(1));
@@ -387,4 +387,4 @@ test.concurrent('Keyword cannot contain escape characters', async () => {
 		<: 1
 	}
 	`)).rejects.toThrow();
-})
+});

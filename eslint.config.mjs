@@ -102,21 +102,22 @@ const rawJsRules = {
 
 const rawTsRules = {
 	rules: {
-		"@typescript-eslint/no-explicit-any": ["warn"],
 		"@typescript-eslint/no-unnecessary-condition": ["off"],
-		"@typescript-eslint/no-var-requires": ["warn"],
-		"@typescript-eslint/no-inferrable-types": ["warn"],
+		"@typescript-eslint/no-unused-expressions": ["off"],
 		"@typescript-eslint/no-empty-function": ["off"],
 		"@typescript-eslint/no-non-null-assertion": ["off"],
 		"@typescript-eslint/explicit-function-return-type": ["off"],
+		// unused-imports/no-unused-varsとの重複のため
+		"@typescript-eslint/no-unused-vars": "off",
+
+		"@typescript-eslint/no-explicit-any": ["warn"],
+		"@typescript-eslint/no-var-requires": ["warn"],
+		"@typescript-eslint/no-inferrable-types": ["warn"],
 
 		"@typescript-eslint/no-misused-promises": ["error", {
 			checksVoidReturn: false,
 		}],
-
 		"@typescript-eslint/consistent-type-imports": "error",
-		// unused-imports/no-unused-varsとの重複のため
-		"@typescript-eslint/no-unused-vars": "off",
 	},
 };
 

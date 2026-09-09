@@ -1,8 +1,9 @@
 import * as assert from 'assert';
 import { describe, test } from 'vitest';
 import { Scanner } from '../src/parser/scanner';
-import { TOKEN, TokenKind, TokenPosition } from '../src/parser/token';
+import { TOKEN, TokenKind } from '../src/parser/token';
 import { CharStream } from '../src/parser/streams/char-stream';
+import type { TokenPosition } from '../src/parser/token';
 
 describe('CharStream', () => {
 	test.concurrent('char', async () => {
@@ -182,7 +183,7 @@ describe('Scanner', () => {
 	test.concurrent('invalid token', async () => {
 		const source = '~';
 		try {
-			const stream = new Scanner(source);
+			const _stream = new Scanner(source);
 		} catch (e) {
 			return;
 		}
@@ -223,7 +224,7 @@ describe('Scanner', () => {
 		next(stream, TokenKind.OpenParen, { line: 1, column: 5 }, { });
 	});
 	test.concurrent('empty lines', async () => {
-		const source = "match 1{\n// comment\n}";
+		const source = 'match 1{\n// comment\n}';
 		const stream = init(source);
 		next(stream, TokenKind.MatchKeyword, { line: 1, column: 1 }, { });
 		next(stream, TokenKind.NumberLiteral, { line: 1, column: 7 }, { hasLeftSpacing: true, value: '1' });

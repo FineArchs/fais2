@@ -1,7 +1,6 @@
 import * as assert from 'assert';
 import { describe, expect, test } from 'vitest';
-import { } from '../src';
-import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
+import { NUM, STR, ARR, OBJ, BOOL, type Value } from '../src/interpreter/value';
 import { AiScriptSyntaxError } from '../src/error';
 import { exe, eq } from './testutils';
 
@@ -232,7 +231,7 @@ describe('literal', () => {
 			['meta'],
 			['module'],
 			['namespace'],
-			['new']
+			['new'],
 		])('key "%s"', async (key) => {
 			const res = await exe(`
 			<: {
@@ -269,7 +268,7 @@ describe('literal', () => {
 			\\u0064\\u0065\\u0066\\u0061\\u0075\\u006c\\u0074: 42,
 		}
 		`)).rejects.toThrow(AiScriptSyntaxError);
-	})
+	});
 
 	test.concurrent('obj (duplicate key)', async () => {
 		await expect(() => exe(`
@@ -297,10 +296,10 @@ describe('literal', () => {
 			c: 3
 		}
 		`);
-		eq(res, OBJ(new Map<string, any>([
+		eq(res, OBJ(new Map<string, Value>([
 			['a', NUM(1)],
 			['b', ARR([NUM(1), NUM(2), NUM(3)])],
-			['c', NUM(3)]
+			['c', NUM(3)],
 		])));
 	});
 });
@@ -366,4 +365,3 @@ describe('Template syntax', () => {
 		eq(res, STR('Hello'));
 	});
 });
-

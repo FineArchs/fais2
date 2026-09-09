@@ -2,9 +2,8 @@ import * as assert from 'assert';
 import { describe, expect, test } from 'vitest';
 import { utils } from '../src';
 import { AiScriptRuntimeError } from '../src/error';
-import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR, FN_NATIVE } from '../src/interpreter/value';
+import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR } from '../src/interpreter/value';
 import { exe, eq } from './testutils';
-
 
 describe('Core', () => {
 	test.concurrent('range', async () => {
@@ -44,49 +43,49 @@ describe('Core', () => {
 
 describe('Arr', () => {
 	test.concurrent('create', async () => {
-		eq(await exe("<: Arr:create(0)"), ARR([]));
-		eq(await exe("<: Arr:create(3)"), ARR([NULL, NULL, NULL]));
-		eq(await exe("<: Arr:create(3, 1)"), ARR([NUM(1), NUM(1), NUM(1)]));
+		eq(await exe('<: Arr:create(0)'), ARR([]));
+		eq(await exe('<: Arr:create(3)'), ARR([NULL, NULL, NULL]));
+		eq(await exe('<: Arr:create(3, 1)'), ARR([NUM(1), NUM(1), NUM(1)]));
 	});
 });
 
 describe('Math', () => {
 	test.concurrent('trig', async () => {
-		eq(await exe("<: Math:sin(Math:PI / 2)"), NUM(1));
-		eq(await exe("<: Math:sin(0 - (Math:PI / 2))"), NUM(-1));
-		eq(await exe("<: Math:sin(Math:PI / 4) * Math:cos(Math:PI / 4)"), NUM(0.5));
+		eq(await exe('<: Math:sin(Math:PI / 2)'), NUM(1));
+		eq(await exe('<: Math:sin(0 - (Math:PI / 2))'), NUM(-1));
+		eq(await exe('<: Math:sin(Math:PI / 4) * Math:cos(Math:PI / 4)'), NUM(0.5));
 	});
 
 	test.concurrent('abs', async () => {
-		eq(await exe("<: Math:abs(1 - 6)"), NUM(5));
+		eq(await exe('<: Math:abs(1 - 6)'), NUM(5));
 	});
 
 	test.concurrent('pow and sqrt', async () => {
-		eq(await exe("<: Math:sqrt(3^2 + 4^2)"), NUM(5));
+		eq(await exe('<: Math:sqrt(3^2 + 4^2)'), NUM(5));
 	});
 
 	test.concurrent('round', async () => {
-		eq(await exe("<: Math:round(3.14)"), NUM(3));
-		eq(await exe("<: Math:round(-1.414213)"), NUM(-1));
+		eq(await exe('<: Math:round(3.14)'), NUM(3));
+		eq(await exe('<: Math:round(-1.414213)'), NUM(-1));
 	});
 
 	test.concurrent('ceil', async () => {
-		eq(await exe("<: Math:ceil(2.71828)"), NUM(3));
-		eq(await exe("<: Math:ceil(0 - Math:PI)"), NUM(-3));
-		eq(await exe("<: Math:ceil(1 / Math:Infinity)"), NUM(0));
+		eq(await exe('<: Math:ceil(2.71828)'), NUM(3));
+		eq(await exe('<: Math:ceil(0 - Math:PI)'), NUM(-3));
+		eq(await exe('<: Math:ceil(1 / Math:Infinity)'), NUM(0));
 	});
 
 	test.concurrent('floor', async () => {
-		eq(await exe("<: Math:floor(23.14069)"), NUM(23));
-		eq(await exe("<: Math:floor(Math:Infinity / 0)"), NUM(Infinity));
+		eq(await exe('<: Math:floor(23.14069)'), NUM(23));
+		eq(await exe('<: Math:floor(Math:Infinity / 0)'), NUM(Infinity));
 	});
 
 	test.concurrent('min', async () => {
-		eq(await exe("<: Math:min(2, 3)"), NUM(2));
+		eq(await exe('<: Math:min(2, 3)'), NUM(2));
 	});
 
 	test.concurrent('max', async () => {
-		eq(await exe("<: Math:max(-2, -3)"), NUM(-2));
+		eq(await exe('<: Math:max(-2, -3)'), NUM(-2));
 	});
 
 	/* flaky
@@ -126,7 +125,7 @@ describe('Math', () => {
 	*/
 
 	test.concurrent('rnd with arg', async () => {
-		eq(await exe("<: Math:rnd(1, 1.5)"), NUM(1));
+		eq(await exe('<: Math:rnd(1, 1.5)'), NUM(1));
 	});
 
 	test.concurrent('gen_rng', async () => {
@@ -154,7 +153,7 @@ describe('Math', () => {
 			test(seed1, seed1)
 			test(seed1, seed2)
 		]
-		`)
+		`);
 		eq(res, ARR([BOOL(true), BOOL(true)]));
 	});
 
@@ -183,7 +182,7 @@ describe('Math', () => {
 			test(seed1, seed1)
 			test(seed1, seed2)
 		]
-		`)
+		`);
 		eq(res, ARR([BOOL(true), BOOL(true)]));
 	});
 
@@ -220,7 +219,7 @@ describe('Obj', () => {
 		eq(res, ARR([
 			ARR([STR('a'), NUM(1)]),
 			ARR([STR('b'), NUM(2)]),
-			ARR([STR('c'), NUM(3)])
+			ARR([STR('c'), NUM(3)]),
 		]));
 	});
 
@@ -331,7 +330,7 @@ describe('Error', () => {
 			await exe(`
 			<: Error:create('ai', {chan: 'kawaii'})
 			`),
-			ERROR('ai', OBJ(new Map([['chan', STR('kawaii')]])))
+			ERROR('ai', OBJ(new Map([['chan', STR('kawaii')]]))),
 		);
 	});
 });
@@ -452,7 +451,7 @@ describe('Date', () => {
 		`);
 		assert.ok(res?.type === 'arr');
 		eq(res.value[0], res.value[1]);
-		eq(res.value[2], STR("2024-04-11T16:47:46.021Z"));
+		eq(res.value[2], STR('2024-04-11T16:47:46.021Z'));
 	});
 
 	test.concurrent('to_iso_str (+09:00)', async () => {
@@ -464,7 +463,7 @@ describe('Date', () => {
 		`);
 		assert.ok(res?.type === 'arr');
 		eq(res.value[0], res.value[1]);
-		eq(res.value[2], STR("2024-04-12T01:47:46.021+09:00"));
+		eq(res.value[2], STR('2024-04-12T01:47:46.021+09:00'));
 	});
 
 	test.concurrent('to_iso_str (-05:18)', async () => {
@@ -476,7 +475,7 @@ describe('Date', () => {
 		`);
 		assert.ok(res?.type === 'arr');
 		eq(res.value[0], res.value[1]);
-		eq(res.value[2], STR("2024-04-11T11:29:46.021-05:18"));
+		eq(res.value[2], STR('2024-04-11T11:29:46.021-05:18'));
 	});
 
 	test.concurrent('parse', async () => {
@@ -491,7 +490,7 @@ describe('Date', () => {
 			NUM(0),
 			NUM(0),
 			NUM(0),
-			ERROR('not_date')
+			ERROR('not_date'),
 		]));
 	});
 });

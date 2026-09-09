@@ -11,7 +11,7 @@ export async function exe(script: string): Promise<Value | undefined> {
 			else if (!Array.isArray(result)) result = [result, value];
 			else result.push(value);
 		},
-		log(type, {val}) {
+		log(type, { val }) {
 			if (type === 'end' && val != null && 'type' in val) result ??= val;
 		},
 		maxStep: 9999,
@@ -26,7 +26,7 @@ export function exeSync(script: string): Value | undefined {
 	const interpreter = new Interpreter({}, {
 		out(value) {
 		},
-		log(type, {val}) {
+		log(type, { val }) {
 		},
 		maxStep: 9999,
 	});

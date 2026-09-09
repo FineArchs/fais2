@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'vitest';
-import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
+import { NUM, STR, NULL, ARR, OBJ, TRUE, FALSE } from '../src/interpreter/value';
 import { exe, eq } from './testutils';
-
 
 describe('num', () => {
 	test.concurrent('to_str', async () => {
@@ -126,7 +125,7 @@ describe('str', () => {
 		eq(res, STR('el'));
 	});
 
-	test.concurrent("codepoint_at", async () => {
+	test.concurrent('codepoint_at', async () => {
 		const res = await exe(`
 		let str = "𩸽"
 		<: str.codepoint_at(0)
@@ -134,69 +133,69 @@ describe('str', () => {
 		eq(res, NUM(171581));
 	});
 
-	test.concurrent("to_arr", async () => {
+	test.concurrent('to_arr', async () => {
 		const res = await exe(`
 		let str = "𩸽👉🏿👨‍👦"
 		<: str.to_arr()
 		`);
 		eq(
 			res,
-			ARR([STR("𩸽"), STR("👉🏿"), STR("👨‍👦")])
+			ARR([STR('𩸽'), STR('👉🏿'), STR('👨‍👦')]),
 		);
 	});
 
-	test.concurrent("to_unicode_arr", async () => {
+	test.concurrent('to_unicode_arr', async () => {
 		const res = await exe(`
 		let str = "𩸽👉🏿👨‍👦"
 		<: str.to_unicode_arr()
 		`);
 		eq(
 			res,
-			ARR([STR("𩸽"), STR("👉"), STR(String.fromCodePoint(0x1F3FF)), STR("👨"), STR("\u200d"), STR("👦")])
+			ARR([STR('𩸽'), STR('👉'), STR(String.fromCodePoint(0x1F3FF)), STR('👨'), STR('\u200d'), STR('👦')]),
 		);
 	});
 
-	test.concurrent("to_unicode_codepoint_arr", async () => {
+	test.concurrent('to_unicode_codepoint_arr', async () => {
 		const res = await exe(`
 		let str = "𩸽👉🏿👨‍👦"
 		<: str.to_unicode_codepoint_arr()
 		`);
 		eq(
 			res,
-			ARR([NUM(171581), NUM(128073), NUM(127999), NUM(128104), NUM(8205), NUM(128102)])
+			ARR([NUM(171581), NUM(128073), NUM(127999), NUM(128104), NUM(8205), NUM(128102)]),
 		);
 	});
 
-	test.concurrent("to_char_arr", async () => {
+	test.concurrent('to_char_arr', async () => {
 		const res = await exe(`
 		let str = "abc𩸽👉🏿👨‍👦def"
 		<: str.to_char_arr()
 		`);
 		eq(
 			res,
-			ARR([97, 98, 99, 55399, 56893, 55357, 56393, 55356, 57343, 55357, 56424, 8205, 55357, 56422, 100, 101, 102].map((s) => STR(String.fromCharCode(s))))
+			ARR([97, 98, 99, 55399, 56893, 55357, 56393, 55356, 57343, 55357, 56424, 8205, 55357, 56422, 100, 101, 102].map((s) => STR(String.fromCharCode(s)))),
 		);
 	});
 
-	test.concurrent("to_charcode_arr", async () => {
+	test.concurrent('to_charcode_arr', async () => {
 		const res = await exe(`
 		let str = "abc𩸽👉🏿👨‍👦def"
 		<: str.to_charcode_arr()
 		`);
 		eq(
 			res,
-			ARR([NUM(97), NUM(98), NUM(99), NUM(55399), NUM(56893), NUM(55357), NUM(56393), NUM(55356), NUM(57343), NUM(55357), NUM(56424), NUM(8205), NUM(55357), NUM(56422), NUM(100), NUM(101), NUM(102)])
+			ARR([NUM(97), NUM(98), NUM(99), NUM(55399), NUM(56893), NUM(55357), NUM(56393), NUM(55356), NUM(57343), NUM(55357), NUM(56424), NUM(8205), NUM(55357), NUM(56422), NUM(100), NUM(101), NUM(102)]),
 		);
 	});
 
-	test.concurrent("to_utf8_byte_arr", async () => {
+	test.concurrent('to_utf8_byte_arr', async () => {
 		const res = await exe(`
 		let str = "abc𩸽👉🏿👨‍👦def"
 		<: str.to_utf8_byte_arr()
 		`);
 		eq(
 			res,
-			ARR([NUM(97), NUM(98), NUM(99), NUM(240), NUM(169), NUM(184), NUM(189), NUM(240), NUM(159), NUM(145), NUM(137), NUM(240), NUM(159), NUM(143), NUM(191), NUM(240), NUM(159), NUM(145), NUM(168), NUM(226), NUM(128), NUM(141), NUM(240), NUM(159), NUM(145), NUM(166), NUM(100), NUM(101), NUM(102)])
+			ARR([NUM(97), NUM(98), NUM(99), NUM(240), NUM(169), NUM(184), NUM(189), NUM(240), NUM(159), NUM(145), NUM(137), NUM(240), NUM(159), NUM(143), NUM(191), NUM(240), NUM(159), NUM(145), NUM(168), NUM(226), NUM(128), NUM(141), NUM(240), NUM(159), NUM(145), NUM(166), NUM(100), NUM(101), NUM(102)]),
 		);
 	});
 
@@ -284,7 +283,7 @@ describe('str', () => {
 		]));
 	});
 
-	test.concurrent("pad_start", async () => {
+	test.concurrent('pad_start', async () => {
 		const res = await exe(`
 		let str = "abc"
 		<: [
@@ -294,13 +293,13 @@ describe('str', () => {
 		]
 		`);
 		eq(res, ARR([
-			STR("abc"), STR("abc"), STR("abc"), STR("abc"), STR(" abc"), STR("  abc"),
-			STR("abc"), STR("abc"), STR("abc"), STR("abc"), STR("0abc"), STR("00abc"),
-			STR("abc"), STR("abc"), STR("abc"), STR("abc"), STR("0abc"), STR("01abc"),
+			STR('abc'), STR('abc'), STR('abc'), STR('abc'), STR(' abc'), STR('  abc'),
+			STR('abc'), STR('abc'), STR('abc'), STR('abc'), STR('0abc'), STR('00abc'),
+			STR('abc'), STR('abc'), STR('abc'), STR('abc'), STR('0abc'), STR('01abc'),
 		]));
 	});
 
-	test.concurrent("pad_end", async () => {
+	test.concurrent('pad_end', async () => {
 		const res = await exe(`
 		let str = "abc"
 		<: [
@@ -310,9 +309,9 @@ describe('str', () => {
 		]
 		`);
 		eq(res, ARR([
-			STR("abc"), STR("abc"), STR("abc"), STR("abc"), STR("abc "), STR("abc  "),
-			STR("abc"), STR("abc"), STR("abc"), STR("abc"), STR("abc0"), STR("abc00"),
-			STR("abc"), STR("abc"), STR("abc"), STR("abc"), STR("abc0"), STR("abc01"),
+			STR('abc'), STR('abc'), STR('abc'), STR('abc'), STR('abc '), STR('abc  '),
+			STR('abc'), STR('abc'), STR('abc'), STR('abc'), STR('abc0'), STR('abc00'),
+			STR('abc'), STR('abc'), STR('abc'), STR('abc'), STR('abc0'), STR('abc01'),
 		]));
 	});
 });
@@ -370,7 +369,7 @@ describe('arr', () => {
 		`);
 		eq(res, ARR([
 			ARR([NUM(1), NUM(2), NUM(3), NUM(4), NUM(5)]),
-			ARR([NUM(1), NUM(2), NUM(3)])
+			ARR([NUM(1), NUM(2), NUM(3)]),
 		]));
 	});
 
@@ -382,7 +381,7 @@ describe('arr', () => {
 		`);
 		eq(res, ARR([
 			ARR([STR('camel'), STR('duck')]),
-			ARR([STR('ant'), STR('bison'), STR('camel'), STR('duck'), STR('elephant')])
+			ARR([STR('ant'), STR('bison'), STR('camel'), STR('duck'), STR('elephant')]),
 		]));
 	});
 
@@ -508,7 +507,7 @@ describe('arr', () => {
 		`);
 		eq(res, ARR([
 			ARR([NUM(3), NUM(2), NUM(1)]),
-			ARR([NUM(1), NUM(2), NUM(3)])
+			ARR([NUM(1), NUM(2), NUM(3)]),
 		]));
 	});
 
@@ -537,7 +536,7 @@ describe('arr', () => {
 			arr.sort(Str:gt)
 			<: arr
 		`);
-		eq(res, ARR([ STR('piyo'),  STR('huga'), STR('hoge'), STR('hoge')]));
+		eq(res, ARR([ STR('piyo'), STR('huga'), STR('hoge'), STR('hoge')]));
 	});
 
 	test.concurrent('sort object array', async () => {
@@ -662,7 +661,7 @@ describe('arr', () => {
 		eq(res, ARR([
 			ARR([
 				NUM(0), ARR([NUM(1)]), ARR([NUM(2), NUM(3)]),
-				ARR([NUM(4), ARR([NUM(5), NUM(6)])])
+				ARR([NUM(4), ARR([NUM(5), NUM(6)])]),
 			]), // target not changed
 			ARR([
 				NUM(0), NUM(1), NUM(2), NUM(3),
@@ -685,12 +684,12 @@ describe('arr', () => {
 		eq(res, ARR([
 			ARR([NUM(0), NUM(1), NUM(2)]), // target not changed
 			ARR([
-				ARR([NUM(0), STR("a")]),
-				ARR([NUM(0), STR("b")]),
-				ARR([NUM(1), STR("a")]),
-				ARR([NUM(1), STR("b")]),
-				ARR([NUM(2), STR("a")]),
-				ARR([NUM(2), STR("b")]),
+				ARR([NUM(0), STR('a')]),
+				ARR([NUM(0), STR('b')]),
+				ARR([NUM(1), STR('a')]),
+				ARR([NUM(1), STR('b')]),
+				ARR([NUM(2), STR('a')]),
+				ARR([NUM(2), STR('b')]),
 			]),
 		]));
 	});
@@ -740,7 +739,7 @@ describe('arr', () => {
 		`);
 		eq(res, ARR([
 			NULL, NULL, NULL, NULL, NULL, NULL, 
-			ARR([NUM(30), NUM(0), NUM(1), NUM(50), NUM(20), NUM(2), NUM(40), NUM(10), NUM(60)])
+			ARR([NUM(30), NUM(0), NUM(1), NUM(50), NUM(20), NUM(2), NUM(40), NUM(10), NUM(60)]),
 		]));
 	});
 	
@@ -759,7 +758,7 @@ describe('arr', () => {
 		`);
 		eq(res, ARR([
 			NUM(9), NUM(3), NUM(0), NUM(8), NUM(2), NULL, 
-			ARR([NUM(1), NUM(4), NUM(5), NUM(6), NUM(7)])
+			ARR([NUM(1), NUM(4), NUM(5), NUM(6), NUM(7)]),
 		]));
 	});
 	

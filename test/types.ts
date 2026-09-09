@@ -1,9 +1,8 @@
 import * as assert from 'assert';
 import { describe, expect, test } from 'vitest';
-import { utils } from '../src';
-import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
-import { AiScriptRuntimeError, AiScriptSyntaxError } from '../src/error';
-import { exe, getMeta, eq } from './testutils';
+import { NUM, STR, NULL, ARR, TRUE, ERROR } from '../src/interpreter/value';
+import { AiScriptSyntaxError } from '../src/error';
+import { exe, eq } from './testutils';
 
 describe('function types', () => {
 	test.concurrent('multiple params', async () => {
@@ -69,7 +68,7 @@ describe('generics', () => {
 			}
 			<: f(1)()
 			`);
-			eq(res, NUM(1))
+			eq(res, NUM(1));
 		});
 
 		test.concurrent('curried', async () => {
@@ -166,13 +165,13 @@ describe('union', () => {
 		eq(res, NUM(1));
 	});
 
-    test.concurrent('type parameter', async () => {
-        const res = await exe(`
+	test.concurrent('type parameter', async () => {
+		const res = await exe(`
         @f<T>(v: T): T | null { null }
         <: f(1)
         `);
-        eq(res, NULL);
-    });
+		eq(res, NULL);
+	});
 
 	test.concurrent('function type', async () => {
 		const res = await exe(`

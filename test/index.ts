@@ -5,11 +5,11 @@
 
 import * as assert from 'assert';
 import { describe, expect, test } from 'vitest';
-import { Parser, Interpreter, Ast } from '../src';
-import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR ,FN_NATIVE } from '../src/interpreter/value';
+import { Parser } from '../src';
+import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, type Value } from '../src/interpreter/value';
 import { AiScriptSyntaxError, AiScriptRuntimeError, AiScriptIndexOutOfRangeError } from '../src/error';
 import { exe, eq } from './testutils';
-
+import type { Ast } from '../src';
 
 test.concurrent('Hello, world!', async () => {
 	const res = await exe('<: "Hello, world!"');
@@ -186,11 +186,11 @@ describe('Object', () => {
 
 		<: obj
 		`);
-		eq(res, OBJ(new Map<string, any>([
+		eq(res, OBJ(new Map<string, Value>([
 			['a', NUM(24)],
-			['b', OBJ(new Map<string, any>([
+			['b', OBJ(new Map<string, Value>([
 				['c', NUM(2)],
-				['d', OBJ(new Map<string, any>([
+				['d', OBJ(new Map<string, Value>([
 					['e', NUM(42)],
 				]))],
 			]))],
@@ -273,7 +273,7 @@ describe('Array', () => {
 			arr[9] = 10
 
 			<: null
-		`), AiScriptIndexOutOfRangeError)
+		`), AiScriptIndexOutOfRangeError);
 	});
 
 	test.concurrent('index out of range error', async () => {
@@ -343,8 +343,8 @@ describe('chain', () => {
 		`);
 		eq(res, OBJ(new Map([
 			['a', OBJ(new Map([
-				['b', ARR([STR('ai'), STR('taso'), STR('kawaii')])]
-			]))]
+				['b', ARR([STR('ai'), STR('taso'), STR('kawaii')])],
+			]))],
 		])));
 	});
 
@@ -381,8 +381,8 @@ describe('chain', () => {
 		eq(res, ARR([
 			OBJ(new Map([
 				['a', NUM(2)],
-				['b', NUM(1)]
-			]))
+				['b', NUM(1)],
+			])),
 		]));
 	});
 
@@ -401,8 +401,8 @@ describe('chain', () => {
 		`);
 		eq(res, OBJ(new Map([
 			['a', OBJ(new Map([
-				['b', ARR([NUM(1), NUM(3), NUM(2)])]
-			]))]
+				['b', ARR([NUM(1), NUM(3), NUM(2)])],
+			]))],
 		])));
 	});
 
@@ -986,7 +986,7 @@ describe('Location', () => {
 		`);
 		assert.equal(nodes.length, 1);
 		node = nodes[0]!;
-		if (!node.loc || node.type !== "tmpl") assert.fail();
+		if (!node.loc || node.type !== 'tmpl') assert.fail();
 		assert.deepEqual(node.loc, {
 			start: { line: 2, column: 4 },
 			end: { line: 2, column: 17 },

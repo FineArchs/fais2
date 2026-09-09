@@ -9,7 +9,6 @@
     "serve": "bun ./serve.ts"
   },
   "dependencies": {
-    "@finearchs/faiscript": "file:..",
     "prismjs": "^1.30.0",
     "vue": "^3.5.11",
     "vue-prism-editor": "^2.0.0-alpha.2"

@@ -37,7 +37,7 @@ describe('Core', () => {
 	test.concurrent('abort', async () => {
 		assert.rejects(
 			exe('Core:abort("hoge")'),
-			e => e.message.includes('hoge'),
+			e => e instanceof Error && e.message.includes('hoge'),
 		);
 	});
 });
@@ -436,8 +436,11 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
+		assert.ok(res?.type === 'arr');
 		eq(res.value[0], res.value[1]);
-		assert.match(res.value[2].value, /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}\.[0-9]{3,3}(Z|[-+][0-9]{2,2}:[0-9]{2,2})$/);
+		const isoString = res.value[2];
+		assert.ok(isoString?.type === 'str');
+		assert.match(isoString.value, /^[0-9]{4,4}-[0-9]{2,2}-[0-9]{2,2}T[0-9]{2,2}:[0-9]{2,2}:[0-9]{2,2}\.[0-9]{3,3}(Z|[-+][0-9]{2,2}:[0-9]{2,2})$/);
 	});
 
 	test.concurrent('to_iso_str (UTC)', async () => {
@@ -447,6 +450,7 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
+		assert.ok(res?.type === 'arr');
 		eq(res.value[0], res.value[1]);
 		eq(res.value[2], STR("2024-04-11T16:47:46.021Z"));
 	});
@@ -458,6 +462,7 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
+		assert.ok(res?.type === 'arr');
 		eq(res.value[0], res.value[1]);
 		eq(res.value[2], STR("2024-04-12T01:47:46.021+09:00"));
 	});
@@ -469,6 +474,7 @@ describe('Date', () => {
 			let d2 = Date:parse(s1)
 			<: [d1, d2, s1]
 		`);
+		assert.ok(res?.type === 'arr');
 		eq(res.value[0], res.value[1]);
 		eq(res.value[2], STR("2024-04-11T11:29:46.021-05:18"));
 	});

@@ -1,10 +1,10 @@
 import { expect as globalExpect } from 'vitest';
 import { Parser, Interpreter } from '../src';
-import { Value } from '../src/interpreter/value';
+import type { Value } from '../src/interpreter/value';
 
 export async function exe(script: string): Promise<Value | undefined> {
 	const parser = new Parser();
-	let result = undefined;
+	let result: Value | Value[] | undefined;
 	const interpreter = new Interpreter({}, {
 		out(value) {
 			if (!result) result = value;
@@ -12,13 +12,13 @@ export async function exe(script: string): Promise<Value | undefined> {
 			else result.push(value);
 		},
 		log(type, {val}) {
-			if (type === 'end') result ??= val;
+			if (type === 'end' && val != null && 'type' in val) result ??= val;
 		},
 		maxStep: 9999,
 	});
 	const ast = parser.parse(script);
 	await interpreter.exec(ast);
-	return result;
+	return result as Value | undefined;
 };
 
 export function exeSync(script: string): Value | undefined {
@@ -54,4 +54,3 @@ export const eq = (a: Value | undefined, b: Value | undefined, expect = globalEx
 		expect('value' in b!).toBe(false);
 	}
 };
-

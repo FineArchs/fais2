@@ -3,27 +3,24 @@
 	"compilerOptions": {
 		"declaration": true,
 		"declarationMap": true,
-		"noEmitOnError": false,
+		"noEmitOnError": true,
+		"sourceMap": true,
+		"target": "es2022",
+		"module": "NodeNext",
+		"experimentalDecorators": true,
+		"moduleResolution": "NodeNext",
+		"esModuleInterop": true,
+		"resolveJsonModule": true,
+    "rootDir": "./src",
+		"outDir": "built",
+
 		"noImplicitAny": true,
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedIndexedAccess": true,
-		"experimentalDecorators": true,
-		"sourceMap": true,
-		"target": "es2022",
-		"module": "NodeNext",
-		"moduleResolution": "NodeNext",
-		"esModuleInterop": true,
-		"allowJs": true,
-		"removeComments": false,
-		"resolveJsonModule": true,
-    "rootDir": "./src",
-		"noLib": false,
-		"outDir": "built",
-		"strictNullChecks": true
+		"strictNullChecks": true,
+		"forceConsistentCasingInFileNames": true
 	},
 	"compileOnSave": false,
-	"include": [
-		"./src/**/*"
-	]
+	"include": ["./src/**/*"]
 }

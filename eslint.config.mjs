@@ -5,9 +5,15 @@ import ts from 'typescript-eslint';
 
 export default ts.config({
 	// https://stackoverflow.com/a/79115209/22200513
-	ignores: ["**/*.js"]
+	ignores: ["built"]
 }, {
-	files: ["src/**/*.ts"],
+	files: [
+		"./src/**/*.ts",
+		//"./test/**/*.ts",
+		//"./scripts/**/*.{mjs,ts}",
+		//"./playground/src/**/*.{vue,js}",
+		//"./*.{mjs,ts,json}",
+	],
 	extends: [
 		js.configs.recommended,
 		...ts.configs.recommended,
@@ -19,9 +25,6 @@ export default ts.config({
 	},
 
 	languageOptions: {
-		ecmaVersion: 5,
-		sourceType: "script",
-
 		parserOptions: {
 			tsconfigRootDir: import.meta.dirname,
 			project: ["./tsconfig.json"],

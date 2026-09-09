@@ -407,7 +407,7 @@ export const std: Record<string, Value> = {
 			keys.value.map(key => {
 				assertString(key);
 				return [key.value, obj.value.get(key.value) ?? NULL];
-			})
+			}),
 		));
 	}),
 

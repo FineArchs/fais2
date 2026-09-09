@@ -1,36 +1,13 @@
-import importPlugin from "eslint-plugin-import";
+import { defineConfig, globalIgnores } from 'eslint/config';
+import importX from "eslint-plugin-import-x";
 import unusedImports from "eslint-plugin-unused-imports";
 import js from "@eslint/js";
 import ts from 'typescript-eslint';
 
-export default ts.config({
-	// https://stackoverflow.com/a/79115209/22200513
-	ignores: ["built"]
-}, {
-	files: [
-		"./src/**/*.ts",
-		//"./test/**/*.ts",
-		//"./scripts/**/*.{mjs,ts}",
-		//"./playground/src/**/*.{vue,js}",
-		//"./*.{mjs,ts,json}",
-	],
-	extends: [
-		js.configs.recommended,
-		...ts.configs.recommended,
-		importPlugin.flatConfigs.recommended,
-		importPlugin.flatConfigs.typescript,
-	],
+const rawJsRules = {
 	plugins: {
 		"unused-imports": unusedImports,
 	},
-
-	languageOptions: {
-		parserOptions: {
-			tsconfigRootDir: import.meta.dirname,
-			project: ["./tsconfig.json"],
-		},
-	},
-
 	rules: {
 		indent: ["warn", "tab", {
 			SwitchCase: 1,
@@ -94,6 +71,37 @@ export default ts.config({
 		"object-curly-spacing": ["error", "always"],
 		"space-infix-ops": ["error"],
 		"space-before-blocks": ["error", "always"],
+
+		"import-x/no-unresolved": ["off"],
+		"import-x/no-default-export": ["warn"],
+		"import-x/order": ["warn", {
+			groups: [
+				"builtin",
+				"external",
+				"internal",
+				"parent",
+				"sibling",
+				"index",
+				"object",
+				"type",
+			],
+		}],
+
+		"unused-imports/no-unused-imports": "warn",
+		"unused-imports/no-unused-vars": ["warn", {
+			vars: "all",
+			varsIgnorePattern: "^_",
+			args: "none",
+			// argsIgnorePattern: "^_",
+			caughtErrors: "none",
+			// caughtErrorsIgnorePattern: "^_",
+			destructuredArrayIgnorePattern: "^_",
+		}],
+	},
+};
+
+const rawTsRules = {
+	rules: {
 		"@typescript-eslint/no-explicit-any": ["warn"],
 		"@typescript-eslint/no-unnecessary-condition": ["off"],
 		"@typescript-eslint/no-var-requires": ["warn"],
@@ -107,32 +115,42 @@ export default ts.config({
 		}],
 
 		"@typescript-eslint/consistent-type-imports": "error",
-		"import/no-unresolved": ["off"],
-		"import/no-default-export": ["warn"],
-
-		"import/order": ["warn", {
-			groups: [
-				"builtin",
-				"external",
-				"internal",
-				"parent",
-				"sibling",
-				"index",
-				"object",
-				"type",
-			],
-		}],
-
+		// unused-imports/no-unused-varsとの重複のため
 		"@typescript-eslint/no-unused-vars": "off",
-		"unused-imports/no-unused-imports": "warn",
-		"unused-imports/no-unused-vars": ["warn", {
-			vars: "all",
-			varsIgnorePattern: "^_",
-			args: "none",
-			// argsIgnorePattern: "^_",
-			caughtErrors: "none",
-			// caughtErrorsIgnorePattern: "^_",
-			destructuredArrayIgnorePattern: "^_",
-		}],
 	},
-});
+};
+
+const jsRules = [
+	js.configs.recommended,
+	importX.flatConfigs.recommended,
+	rawJsRules,
+];
+
+const tsRules = [
+	js.configs.recommended,
+	ts.configs.recommended,
+	importX.flatConfigs.recommended,
+	importX.flatConfigs.typescript,
+	rawJsRules,
+	rawTsRules,
+];
+
+export default defineConfig([
+	// https://stackoverflow.com/a/79115209/22200513
+	globalIgnores([
+		"built",
+		"test",
+		"playground",
+	]),
+
+	{
+		extends: tsRules,
+		files: ["src/**/*.ts"],
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+				project: ["./tsconfig.json"],
+			},
+		},
+	},
+]);

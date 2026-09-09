@@ -17,7 +17,7 @@
 	"scripts": {
 		"start": "bun ./scripts/exec.ts",
 		"build": "bun scripts/gen-pkg-ts.ts && tsc",
-		"typecheck": "bun run build && tsc --project tsconfig.test.json && tsc --project tsconfig.scripts.json",
+		"typecheck": "bun run build && tsc --project tsconfig.test.json && tsc --project tsconfig.scripts.json && bun run --cwd playground typecheck",
 		"lint": "eslint .",
 		"test": "vitest run"
 	},

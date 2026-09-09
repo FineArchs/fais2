@@ -1,7 +1,7 @@
 <template>
 <div id="root">
 	<Settings v-if="showSettings" @exit="showSettings = false" />
-	<h1>AiScript (v{{ AISCRIPT_VERSION }}) Playground<button id="show-settings-button" @click="showSettings = true">Settings</button></h1>
+	<h1>FaiScript (v{{ AISCRIPT_VERSION }}) Playground<button id="show-settings-button" @click="showSettings = true">Settings</button></h1>
 	<div id="grid1">
 		<div id="editor" class="container">
 			<header>Input<div class="actions"><button @click="setCode">FizzBuzz</button></div></header>
@@ -16,8 +16,8 @@
 		<div id="logs" class="container">
 			<header>
 				Output
-				<div v-if="paused" class="actions"><button @click="interpreter.unpause(), paused = false">Unpause</button></div>
-				<div v-else class="actions"><button @click="interpreter.pause(), paused = true">Pause</button></div>
+				<div v-if="paused" class="actions"><button @click="unpause">Unpause</button></div>
+				<div v-else class="actions"><button @click="pause">Pause</button></div>
 			</header>
 			<div>
 				<div v-for="log in logs" class="log" :key="log.id" :class="[{ print: log.print }, log.type]"><span class="type">{{ log.type }}</span> {{ log.text }}</div>
@@ -50,25 +50,32 @@
 </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, watch } from 'vue';
 import { AISCRIPT_VERSION, Interpreter, Parser, utils } from '../../built/index.js';
-import { std } from '../../built/interpreter/lib/std.js';
+import type { Ast, LogObject, values } from '../../built/index.js';
 
 import { PrismEditor } from 'vue-prism-editor';
 import 'vue-prism-editor/dist/prismeditor.min.css';
-import 'prismjs';
-import { highlight, languages } from 'prismjs/components/prism-core';
+import { highlight, languages } from 'prismjs';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/themes/prism-okaidia.css';
-import Settings, { settings } from './Settings.vue';
+import { settings } from './settings';
+import Settings from './Settings.vue';
 
-const script = ref(window.localStorage.getItem('script') || '<: "Hello, AiScript!"');
+const script = ref(window.localStorage.getItem('script') || '<: "Hello, FaiScript!"');
 
-const ast = ref(null);
-const logs = ref([]);
-const syntaxErrorMessage = ref(null);
+type PlaygroundLog = {
+	id: number;
+	type?: string;
+	text: string;
+	print: boolean;
+};
+
+const ast = ref<Ast.Node[]>();
+const logs = ref<PlaygroundLog[]>([]);
+const syntaxErrorMessage = ref<string>();
 const showSettings = ref(false);
 const paused = ref(false);
 
@@ -76,14 +83,14 @@ watch(script, () => {
 	window.localStorage.setItem('script', script.value);
 	try {
 		ast.value = Parser.parse(script.value);
-		syntaxErrorMessage.value = null;
-	} catch (e) {
-		syntaxErrorMessage.value = e.message;
-		console.error(e.info);
+		syntaxErrorMessage.value = undefined;
+	} catch (e: unknown) {
+		syntaxErrorMessage.value = e instanceof Error ? e.message : String(e);
+		console.error(e);
 		return;
 	}
 }, {
-	immediate: true
+	immediate: true,
 });
 
 const setCode = () => {
@@ -95,36 +102,49 @@ const setCode = () => {
 }`;
 };
 
-let interpreter = null;
-const run = async () => {
+let interpreter: Interpreter | undefined;
+
+const pause = (): void => {
+	interpreter?.pause();
+	paused.value = true;
+};
+
+const unpause = (): void => {
+	interpreter?.unpause();
+	paused.value = false;
+};
+
+const run = async (): Promise<void> => {
 	logs.value = [];
 
 	interpreter?.abort();
 	paused.value = false;
 	interpreter = new Interpreter({}, {
-		in: (q) => {
+		in: q => {
 			return new Promise(ok => {
 				const res = window.prompt(q);
-				ok(res);
+				ok(res ?? '');
 			});
 		},
-		out: (value) => {
+		out: (value: values.Value) => {
 			logs.value.push({
 				id: Math.random(),
 				type: value.type,
-				text: value.type === 'str' || value.type === 'num' ? value.value : utils.valToString(value),
-				print: true
+				text: value.type === 'str' || value.type === 'num' ? String(value.value) : utils.valToString(value),
+				print: true,
 			});
 		},
 		err: (e) => {
 			window.alert(e.toString());
 		},
-		log: (type, params) => {
+		log: (type: string, params: LogObject) => {
 			switch (type) {
 				case 'end': logs.value.push({
 					id: Math.random(),
-					text: utils.valToString(params.val, true),
-					print: false
+					text: params.val != null && 'type' in params.val
+						? utils.valToString(params.val, true)
+						: '',
+					print: false,
 				}); break;
 				default: break;
 			}
@@ -135,14 +155,15 @@ const run = async () => {
 
 	try {
 		await interpreter.exec(ast.value);
-	} catch (e) {
+	} catch (e: unknown) {
 		console.error(e);
 		window.alert('Internal Error: ' + e);
 	}
-}
+};
 
-const highlighter = code => {
-	return highlight(code, languages.js, 'javascript');
+const highlighter = (code: string): string => {
+	const grammar = languages.javascript;
+	return grammar == null ? code : highlight(code, grammar, 'javascript');
 };
 </script>
 

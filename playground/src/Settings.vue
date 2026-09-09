@@ -3,7 +3,7 @@
 	<div id="settings-body">
 		<div class="settings-item">
 			<header>IRQ Rate</header>
-			<input type="number" v-model="settings.irqRate" />
+			<input type="number" v-model="irqRate" />
 		</div>
 		<div class="settings-item">
 			<header>IRQ Sleep Time</header>
@@ -21,22 +21,13 @@
 </div>
 </template>
 
-<script>
-import { ref, computed } from 'vue';
-const irqSleepTime = ref(5);
-const irqSleepMethod = ref('time');
-export const settings = ref({
-	irqRate: 300,
-	irqSleep: computed(() => ({
-		time: irqSleepTime.value,
-		requestIdleCallback: () => new Promise(cb => requestIdleCallback(cb)),
-	})[irqSleepMethod.value]),
-});
-</script>
+<script setup lang="ts">
+import { ref } from 'vue';
 
-<script setup>
-const emits = defineEmits(['exit']);
-const bg = ref(null);
+import { irqRate, irqSleepMethod, irqSleepTime } from './settings';
+
+defineEmits<{ exit: [] }>();
+const bg = ref<HTMLDivElement>();
 </script>
 
 <style>

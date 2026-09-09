@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "bun ./index.html",
     "build": "bun ./build.ts",
-    "serve": "bun ./serve.ts"
+    "serve": "bun ./serve.ts",
+    "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
     "prismjs": "^1.30.0",
@@ -14,6 +15,8 @@
     "vue-prism-editor": "^2.0.0-alpha.2"
   },
   "devDependencies": {
-    "@vue/compiler-sfc": "^3.0.5"
+    "@types/prismjs": "^1.26.6",
+    "@vue/compiler-sfc": "^3.0.5",
+    "vue-tsc": "^3.3.11"
   }
 }

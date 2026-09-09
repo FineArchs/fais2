@@ -57,7 +57,7 @@ const vuePlugin: BunPlugin = {
 					`style.textContent = ${JSON.stringify(css)};\n` +
 					`document.head.append(style);\n` +
 					`export default __component__;`,
-				loader: 'js',
+				loader: 'ts',
 			};
 		});
 	},

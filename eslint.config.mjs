@@ -175,4 +175,17 @@ export default defineConfig([
 			},
 		},
 	},
+
+	{
+		extends: tsRules,
+		basePath: "playground",
+		// TODO: Add Vue file support
+		files: ["*.ts", "src/**/*.ts"],
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+				project: ["./playground/tsconfig.json"],
+			},
+		},
+	},
 ]);

@@ -139,7 +139,6 @@ export default defineConfig([
 	// https://stackoverflow.com/a/79115209/22200513
 	globalIgnores([
 		"built",
-		"test",
 		"playground",
 	]),
 
@@ -150,6 +149,17 @@ export default defineConfig([
 			parserOptions: {
 				tsconfigRootDir: import.meta.dirname,
 				project: ["./tsconfig.json"],
+			},
+		},
+	},
+
+	{
+		extends: tsRules,
+		files: ["test/**/*.ts"],
+		languageOptions: {
+			parserOptions: {
+				tsconfigRootDir: import.meta.dirname,
+				project: ["./tsconfig.test.json"],
 			},
 		},
 	},

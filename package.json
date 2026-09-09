@@ -19,6 +19,7 @@
 		"parse": "bun ./scripts/parse.mjs",
 		"repl": "bun ./scripts/repl.mjs",
 		"build": "bun scripts/gen-pkg-ts.mjs && tsc",
+		"typecheck": "bun run build && tsc --project tsconfig.test.json",
 		"lint": "eslint .",
 		"test": "vitest run"
 	},

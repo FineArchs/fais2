@@ -4,10 +4,13 @@ on:
   push:
     branches:
       - main
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   deploy:
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
     runs-on: ubuntu-latest
 
     steps:
@@ -29,9 +32,10 @@ jobs:
         run: bun run build
         working-directory: ./playground
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v4
-        if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./playground/dist
+          path: ./playground/dist
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v5

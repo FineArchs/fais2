@@ -1,2 +1,2 @@
 import { pkg } from './pkg.js';
-export const AISCRIPT_VERSION = pkg.version;
+export const VERSION = pkg.version;

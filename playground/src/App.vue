@@ -1,7 +1,7 @@
 <template>
 <div id="root">
 	<Settings v-if="showSettings" @exit="showSettings = false" />
-	<h1>FaiScript (v{{ AISCRIPT_VERSION }}) Playground<button id="show-settings-button" @click="showSettings = true">Settings</button></h1>
+	<h1>FaiScript (v{{ VERSION }}) Playground<button id="show-settings-button" @click="showSettings = true">Settings</button></h1>
 	<div id="grid1">
 		<div id="editor" class="container">
 			<header>Input<div class="actions"><button @click="setCode">FizzBuzz</button></div></header>
@@ -58,7 +58,7 @@ import { highlight, languages } from 'prismjs';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/themes/prism-okaidia.css';
-import { AISCRIPT_VERSION, Interpreter, Parser, utils } from '../../built/index.js';
+import { VERSION, Interpreter, Parser, utils } from '../../built/index.js';
 import { settings } from './settings';
 import Settings from './Settings.vue';
 import type { Ast, LogObject, values } from '../../built/index.js';

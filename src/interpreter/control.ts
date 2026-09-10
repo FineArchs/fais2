@@ -1,4 +1,5 @@
 import { AiScriptRuntimeError } from '../error.js';
+import { mustBeNever } from '../utils/mustbenever.js';
 import { NULL } from './value.js';
 import type { Reference } from './reference.js';
 import type { Value } from './value.js';
@@ -91,7 +92,5 @@ export function isControl(v: Value | Control | Reference): v is Control {
 		case 'continue':
 			return true;
 	}
-	// exhaustive check
-	v satisfies never;
-	throw new TypeError('expected value or control');
+	return mustBeNever(v, () => new TypeError('expected value or control'));
 }

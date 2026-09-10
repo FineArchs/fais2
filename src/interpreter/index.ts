@@ -3,6 +3,7 @@
  */
 
 import { autobind } from '../utils/mini-autobind.js';
+import { mustBeNever } from '../utils/mustbenever.js';
 import { AiScriptError, NonAiScriptError, AiScriptNamespaceError, AiScriptIndexOutOfRangeError, AiScriptRuntimeError, AiScriptHostsideError } from '../error.js';
 import * as Ast from '../node.js';
 import { nodeToJs } from '../utils/node-to-js.js';
@@ -278,10 +279,7 @@ export class Interpreter {
 				}
 
 				default: {
-					// exhaustiveness check
-					const n: never = node;
-					const nd = n as Ast.Node;
-					throw new AiScriptNamespaceError('invalid ns member type: ' + nd.type, nd.loc.start);
+					return mustBeNever(node, (n: Ast.Node) => new AiScriptNamespaceError('invalid ns member type: ' + n.type, n.loc.start));
 				}
 			}
 		}
@@ -325,10 +323,7 @@ export class Interpreter {
 				}
 
 				default: {
-					// exhaustiveness check
-					const n: never = node;
-					const nd = n as Ast.Node;
-					throw new AiScriptNamespaceError('invalid ns member type: ' + nd.type, nd.loc.start);
+					return mustBeNever(node, (n: Ast.Node) => new AiScriptNamespaceError('invalid ns member type: ' + n.type, n.loc.start));
 				}
 			}
 		}
@@ -994,8 +989,7 @@ export class Interpreter {
 			}
 
 			default: {
-				node satisfies never;
-				throw new Error('invalid node type');
+				return mustBeNever(node, () => 'invalid node type');
 			}
 		}
 	}
@@ -1522,8 +1516,7 @@ export class Interpreter {
 			}
 
 			default: {
-				node satisfies never;
-				throw new Error('invalid node type');
+				return mustBeNever(node, () => 'invalid node type');
 			}
 		}
 	}

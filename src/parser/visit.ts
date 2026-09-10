@@ -1,3 +1,4 @@
+import { mustBeNever } from '../utils/mustbenever.js';
 import type * as Ast from '../node.js';
 
 export function visitNode(node: Ast.Node, fn: (node: Ast.Node, ancestors: Ast.Node[]) => Ast.Node): Ast.Node {
@@ -246,9 +247,7 @@ function visitNodeInner(node: Ast.Node, fn: (node: Ast.Node, ancestors: Ast.Node
 		}
 
 		default: {
-			// exhaustiveness check
-			result satisfies never;
-			throw new Error('invalid node type');
+			return mustBeNever(result, () => 'invalid node type');
 		}
 	}
 

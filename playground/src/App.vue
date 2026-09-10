@@ -52,17 +52,16 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { AISCRIPT_VERSION, Interpreter, Parser, utils } from '../../built/index.js';
-import type { Ast, LogObject, values } from '../../built/index.js';
-
 import { PrismEditor } from 'vue-prism-editor';
 import 'vue-prism-editor/dist/prismeditor.min.css';
 import { highlight, languages } from 'prismjs';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/themes/prism-okaidia.css';
+import { AISCRIPT_VERSION, Interpreter, Parser, utils } from '../../built/index.js';
 import { settings } from './settings';
 import Settings from './Settings.vue';
+import type { Ast, LogObject, values } from '../../built/index.js';
 
 const script = ref(window.localStorage.getItem('script') || '<: "Hello, FaiScript!"');
 
@@ -157,7 +156,7 @@ const run = async (): Promise<void> => {
 		await interpreter.exec(ast.value);
 	} catch (e: unknown) {
 		console.error(e);
-		window.alert('Internal Error: ' + e);
+		window.alert('Internal Error: ' + String(e));
 	}
 };
 

@@ -12,7 +12,10 @@ const vuePlugin: BunPlugin = {
 		build.onLoad({ filter: /\.vue$/ }, async ({ path }) => {
 			const source = await Bun.file(path).text();
 			const { descriptor, errors } = parse(source, { filename: path });
-			if (errors.length > 0) throw errors[0];
+			if (errors.length > 0) {
+				const error = errors[0];
+				throw error instanceof Error ? error : new Error(String(error));
+			}
 
 			const id = Bun.hash(source).toString(16);
 			const scopeId = `data-v-${id}`;
@@ -32,7 +35,10 @@ const vuePlugin: BunPlugin = {
 						bindingMetadata: script.bindings,
 					},
 				});
-				if (result.errors.length > 0) throw result.errors[0];
+				if (result.errors.length > 0) {
+					const error = result.errors[0];
+					throw error instanceof Error ? error : new Error(String(error));
+				}
 				template = result.code.replace('export function render', 'function render');
 			}
 
@@ -43,20 +49,23 @@ const vuePlugin: BunPlugin = {
 					source: style.content,
 					scoped: style.scoped,
 				});
-				if (result.errors.length > 0) throw result.errors[0];
+				if (result.errors.length > 0) {
+					const error = result.errors[0];
+					throw error instanceof Error ? error : new Error(String(error));
+				}
 				return result.code;
 			}).join('\n');
 
 			return {
 				contents: `${script.content}\n${template}\n` +
-					`__component__.render = render;\n` +
+					'__component__.render = render;\n' +
 					(descriptor.styles.some(style => style.scoped)
 						? `__component__.__scopeId = ${JSON.stringify(scopeId)};\n`
 						: '') +
-					`const style = document.createElement('style');\n` +
+					'const style = document.createElement(\'style\');\n' +
 					`style.textContent = ${JSON.stringify(css)};\n` +
-					`document.head.append(style);\n` +
-					`export default __component__;`,
+					'document.head.append(style);\n' +
+					'export default __component__;',
 				loader: 'ts',
 			};
 		});

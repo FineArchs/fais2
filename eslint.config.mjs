@@ -1,6 +1,8 @@
 import { defineConfig, globalIgnores } from 'eslint/config';
+import globals from 'globals';
 import importX from "eslint-plugin-import-x";
 import unusedImports from "eslint-plugin-unused-imports";
+import vue from "eslint-plugin-vue";
 import js from "@eslint/js";
 import ts from 'typescript-eslint';
 
@@ -139,11 +141,21 @@ const tsRules = [
 	rawTsRules,
 ];
 
+const vueRules = [
+	js.configs.recommended,
+	ts.configs.recommendedTypeChecked,
+	importX.flatConfigs.recommended,
+	importX.flatConfigs.typescript,
+	vue.configs["flat/essential"],
+	rawJsRules,
+	rawTsRules,
+	{ rules: { "vue/multi-word-component-names": "off" } },
+];
+
 export default defineConfig([
 	// https://stackoverflow.com/a/79115209/22200513
 	globalIgnores([
 		"built",
-		"playground",
 	]),
 
 	{
@@ -182,12 +194,29 @@ export default defineConfig([
 	{
 		extends: tsRules,
 		basePath: "playground",
-		// TODO: Add Vue file support
 		files: ["*.ts", "src/**/*.ts"],
 		languageOptions: {
 			parserOptions: {
 				tsconfigRootDir: import.meta.dirname,
 				project: ["./playground/tsconfig.json"],
+			},
+		},
+		rules: {
+			"import-x/no-default-export": "off",
+		},
+	},
+
+	{
+		extends: vueRules,
+		basePath: "playground",
+		files: ["src/**/*.vue"],
+		languageOptions: {
+			globals: globals.browser,
+			parserOptions: {
+				parser: ts.parser,
+				tsconfigRootDir: import.meta.dirname,
+				project: ["./playground/tsconfig.json"],
+				extraFileExtensions: [".vue"],
 			},
 		},
 	},

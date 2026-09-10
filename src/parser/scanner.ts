@@ -464,7 +464,7 @@ export class Scanner implements ITokenStream {
 	}
 
 	private readUnicodeEscapeSequence(): `u${string}` {
-		if (this.stream.eof || (this.stream.char as string) !== 'u') {
+		if (this.stream.eof || this.stream.char !== 'u') {
 			throw new AiScriptSyntaxError('character "u" expected', this.stream.getPos());
 		}
 		this.stream.next();
@@ -496,7 +496,7 @@ export class Scanner implements ITokenStream {
 		}
 		if (!this.stream.eof && this.stream.char === '.') {
 			this.stream.next();
-			while (!this.stream.eof as boolean && digit.test(this.stream.char as string)) {
+			while (!this.stream.eof as boolean && digit.test(this.stream.char)) {
 				fractional += this.stream.char;
 				this.stream.next();
 			}
@@ -656,7 +656,7 @@ export class Scanner implements ITokenStream {
 					if (this.stream.char === '{') {
 						exprBracketDepth++;
 					}
-					if ((this.stream.char as string) === '}') {
+					if (this.stream.char === '}') {
 						// 埋め込み式の終了
 						if (exprBracketDepth === 0) {
 							elements.push(TOKEN(TokenKind.TemplateExprElement, elementPos, { hasLeftSpacing, children: tokenBuf }));

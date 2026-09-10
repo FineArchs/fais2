@@ -62,7 +62,7 @@ export class Interpreter {
 				const q = args[0];
 				assertString(q);
 				if (this.opts.in == null) return NULL;
-				const a = await this.opts.in!(q.value);
+				const a = await this.opts.in(q.value);
 				return STR(a);
 			}),
 		};
@@ -350,7 +350,7 @@ export class Interpreter {
 			});
 			return result ?? NULL;
 		} else {
-			const fnScope = fn.scope!.createChildScope();
+			const fnScope = fn.scope.createChildScope();
 			for (const [i, param] of fn.params.entries()) {
 				const arg = args[i];
 				if (!param.default) expectAny(arg);
@@ -358,7 +358,7 @@ export class Interpreter {
 			}
 
 			const info: CallInfo = { name: fn.name ?? '<anonymous>', pos };
-			return unWrapRet(await this._run(fn.statements!, fnScope, [...callStack, info]));
+			return unWrapRet(await this._run(fn.statements, fnScope, [...callStack, info]));
 		}
 	}
 
@@ -390,7 +390,7 @@ export class Interpreter {
 			}
 			return result ?? NULL;
 		} else {
-			const fnScope = fn.scope!.createChildScope();
+			const fnScope = fn.scope.createChildScope();
 			for (const [i, param] of fn.params.entries()) {
 				const arg = args[i];
 				if (!param.default) expectAny(arg);
@@ -398,7 +398,7 @@ export class Interpreter {
 			}
 
 			const info: CallInfo = { name: fn.name ?? '<anonymous>', pos };
-			return unWrapRet(this._runSync(fn.statements!, fnScope, [...callStack, info]));
+			return unWrapRet(this._runSync(fn.statements, fnScope, [...callStack, info]));
 		}
 	}
 
@@ -444,8 +444,8 @@ export class Interpreter {
 
 	@autobind
 	private _eval(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		return this.__eval(node, scope, callStack).catch(e => {
-			if (e.pos) throw e;
+		return this.__eval(node, scope, callStack).catch((e: unknown) => {
+			if (typeof e === 'object' && e !== null && 'pos' in e && e.pos) throw e;
 			else {
 				const e2 = (e instanceof AiScriptError) ? e : new NonAiScriptError(e);
 				e2.pos = node.loc.start;
@@ -856,15 +856,11 @@ export class Interpreter {
 			case 'tmpl': {
 				let str = '';
 				for (const x of node.tmpl) {
-					if (typeof x === 'string') {
-						str += x;
-					} else {
-						const v = await this._eval(x, scope, callStack);
-						if (isControl(v)) {
-							return v;
-						}
-						str += reprValue(v);
+					const v = await this._eval(x, scope, callStack);
+					if (isControl(v)) {
+						return v;
 					}
+					str += reprValue(v);
 				}
 				return STR(str);
 			}
@@ -1388,15 +1384,11 @@ export class Interpreter {
 			case 'tmpl': {
 				let str = '';
 				for (const x of node.tmpl) {
-					if (typeof x === 'string') {
-						str += x;
-					} else {
-						const v = this._evalSync(x, scope, callStack);
-						if (isControl(v)) {
-							return v;
-						}
-						str += reprValue(v);
+					const v = this._evalSync(x, scope, callStack);
+					if (isControl(v)) {
+						return v;
 					}
+					str += reprValue(v);
 				}
 				return STR(str);
 			}

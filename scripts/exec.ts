@@ -85,7 +85,7 @@ Type '.exit' to end this session.`,
 				source += '\n';
 				prompt = '... ';
 			} else {
-				console.error(chalk.red(`${error}`));
+				console.error(chalk.red(String(error)));
 				source = '';
 				prompt = '>>> ';
 			}

@@ -80,7 +80,7 @@ function visitNodeInner(node: Ast.Node, fn: (node: Ast.Node, ancestors: Ast.Node
 		case 'fn': {
 			for (const param of result.params) {
 				if (param.default) {
-					param.default = visitNodeInner(param.default!, fn, ancestors) as Ast.Fn['params'][number]['default'];
+					param.default = visitNodeInner(param.default, fn, ancestors) as Ast.Fn['params'][number]['default'];
 				}
 				if (param.argType != null) {
 					param.argType = visitNodeInner(param.argType, fn, ancestors) as Ast.Fn['params'][number]['argType'];

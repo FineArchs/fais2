@@ -382,7 +382,7 @@ function parseReturn(s: ITokenStream): Ast.Return {
 export function parseStatementWithAttr(s: ITokenStream): Ast.Definition {
 	const attrs: Ast.Attribute[] = [];
 	while (s.is(TokenKind.OpenSharpBracket)) {
-		attrs.push(parseAttr(s) as Ast.Attribute);
+		attrs.push(parseAttr(s));
 		s.expect(TokenKind.NewLine);
 		s.next();
 	}

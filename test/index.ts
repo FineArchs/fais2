@@ -259,7 +259,7 @@ describe('Array', () => {
 	});
 
 	test.concurrent('Assign array item to out of range', async () => {
-		assert.rejects(exe(`
+		await assert.rejects(exe(`
 			let arr = [1, 2, 3]
 
 			arr[3] = 4
@@ -267,7 +267,7 @@ describe('Array', () => {
 			<: null
 		`), AiScriptIndexOutOfRangeError);
 
-		assert.rejects(exe(`
+		await assert.rejects(exe(`
 			let arr = [1, 2, 3]
 
 			arr[9] = 10

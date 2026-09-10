@@ -392,7 +392,7 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		repeat: (target: VArr): VFn => FN_NATIVE(([times], opts) => {
 			assertNumber(times);
 			try {
-				return ARR(Array(times.value).fill(target.value).flat());
+				return ARR(Array<Value[]>(times.value).fill(target.value).flat());
 			} catch (e) {
 				if (times.value < 0) throw new AiScriptRuntimeError('arr.repeat expected non-negative number, got negative');
 				if (!Number.isInteger(times.value)) throw new AiScriptRuntimeError('arr.repeat expected integer, got non-integer');

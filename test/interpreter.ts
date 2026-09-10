@@ -40,7 +40,7 @@ describe('error handler', () => {
 			genOutsideCaller: FN_NATIVE(([fn], opts) => {
 				utils.assertFunction(fn);
 				outsideCaller = async () => {
-					opts.topCall(fn, []);
+					await opts.topCall(fn, []);
 				};
 			}),
 		}, {
@@ -75,7 +75,7 @@ describe('error location', () => {
 		}, {
 			err(e) { ok(e.pos); },
 		});
-		aiscript.exec(Parser.parse(src)).then(() => ng('error has not occured.'));
+		void aiscript.exec(Parser.parse(src)).then(() => ng('error has not occured.'));
 	});
 
 	test.concurrent('Non-aiscript Error', async () => {
@@ -125,7 +125,7 @@ describe('callstack', () => {
 		}, {
 			err(e) { ok(e.message); },
 		});
-		aiscript.exec(Parser.parse(src)).then(() => ng('error has not occurred.'));
+		void aiscript.exec(Parser.parse(src)).then(() => ng('error has not occurred.'));
 	});
 
 	test('error in function', async () => {
@@ -238,14 +238,14 @@ describe('IRQ', () => {
 
 		test('It ends', async () => {
 			const countSleepsSpy = vi.fn(countSleeps);
-			countSleepsSpy(100);
+			void countSleepsSpy(100);
 			await vi.advanceTimersByTimeAsync(1000);
 			return expect(countSleepsSpy).toHaveResolved();
 		});
 
 		test('It takes time', async () => {
 			const countSleepsSpy = vi.fn(countSleeps);
-			countSleepsSpy(100);
+			void countSleepsSpy(100);
 			await vi.advanceTimersByTimeAsync(999);
 			return expect(countSleepsSpy).not.toHaveResolved();
 		});

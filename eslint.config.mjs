@@ -107,6 +107,9 @@ const rawTsRules = {
 		"@typescript-eslint/no-empty-function": ["off"],
 		"@typescript-eslint/no-non-null-assertion": ["off"],
 		"@typescript-eslint/explicit-function-return-type": ["off"],
+		"@typescript-eslint/require-await": ["off"],
+		"@typescript-eslint/unbound-method": ["off"],
+		"@typescript-eslint/prefer-promise-reject-errors": ["off"],
 		// unused-imports/no-unused-varsとの重複のため
 		"@typescript-eslint/no-unused-vars": "off",
 
@@ -129,7 +132,7 @@ const jsRules = [
 
 const tsRules = [
 	js.configs.recommended,
-	ts.configs.recommended,
+	ts.configs.recommendedTypeChecked,
 	importX.flatConfigs.recommended,
 	importX.flatConfigs.typescript,
 	rawJsRules,

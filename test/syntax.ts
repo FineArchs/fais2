@@ -623,7 +623,7 @@ describe('Variable declaration', () => {
 		const err = await exe(`
 			let hoge = 33
 			hoge = 4
-		`).then(() => undefined).catch(err => err);
+		`).then(() => undefined).catch((err: unknown) => err);
 
 		assert.ok(err instanceof AiScriptRuntimeError);
 	});
@@ -1736,4 +1736,3 @@ describe('exists', () => {
 		eq(res, ARR([BOOL(true), BOOL(false)]));
 	});
 });
-

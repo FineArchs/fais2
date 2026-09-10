@@ -344,7 +344,7 @@ export const std: Record<string, Value> = {
 	'Arr:create': FN_NATIVE(([length, initial]) => {
 		assertNumber(length);
 		try {
-			return ARR(Array(length.value).fill(initial ?? NULL));
+			return ARR(Array<Value>(length.value).fill(initial ?? NULL));
 		} catch (e) {
 			if (length.value < 0) throw new AiScriptRuntimeError('Arr:create expected non-negative number, got negative');
 			if (!Number.isInteger(length.value)) throw new AiScriptRuntimeError('Arr:create expected integer, got non-integer');
@@ -438,14 +438,14 @@ export const std: Record<string, Value> = {
 		assertFunction(callback);
 		if (immediate) {
 			assertBoolean(immediate);
-			if (immediate.value) opts.call(callback, []);
+			if (immediate.value) void opts.call(callback, []);
 		}
 
 		let id: ReturnType<typeof setInterval>;
 
 		const start = (): void => {
 			id = setInterval(() => {
-				opts.topCall(callback, []);
+				void opts.topCall(callback, []);
 			}, interval.value);
 			opts.registerAbortHandler(stop);
 			opts.registerPauseHandler(stop);
@@ -475,7 +475,7 @@ export const std: Record<string, Value> = {
 
 		const start = (): void => {
 			id = setTimeout(() => {
-				opts.topCall(callback, []);
+				void opts.topCall(callback, []);
 				opts.unregisterAbortHandler(stop);
 				opts.unregisterPauseHandler(stop);
 			}, delay.value);

@@ -139,7 +139,7 @@ export function getTypeName(type: Type): string {
 			return type.name;
 		}
 		case 'union': {
-			return type.inners.join(' | ');
+			return type.inners.map(inner => getTypeName(inner)).join(' | ');
 		}
 	}
 }
@@ -160,7 +160,7 @@ export function getTypeNameBySource(typeSource: Ast.TypeSource): string {
 			return `@(${params}) { ${result} }`;
 		}
 		case 'unionTypeSource': {
-			return typeSource.inners.map(inner => getTypeBySource(inner)).join(' | ');
+			return typeSource.inners.map(inner => getTypeNameBySource(inner)).join(' | ');
 		}
 	}
 }

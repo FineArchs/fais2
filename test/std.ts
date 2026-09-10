@@ -34,7 +34,7 @@ describe('Core', () => {
 	});
 
 	test.concurrent('abort', async () => {
-		assert.rejects(
+		await assert.rejects(
 			exe('Core:abort("hoge")'),
 			e => e instanceof Error && e.message.includes('hoge'),
 		);

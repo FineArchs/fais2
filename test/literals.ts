@@ -80,7 +80,7 @@ describe('literal', () => {
 	});
 
 	test.concurrent('number (missing exponent)', async () => {
-		assert.rejects(() => exe(`
+		await assert.rejects(() => exe(`
 		<: 1.2e+
 		`), 'exponent expected');
 	});
@@ -277,7 +277,7 @@ describe('literal', () => {
 	});
 
 	test.concurrent('obj (invalid key)', async () => {
-		assert.rejects(() => exe(`
+		await assert.rejects(() => exe(`
 		<: {
 			42: 42,
 		}

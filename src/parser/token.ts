@@ -1,3 +1,5 @@
+import { mustBeNever } from '../utils/mustbenever.js';
+
 export enum TokenKind {
 	EOF,
 	NewLine,
@@ -188,10 +190,6 @@ export function keywordTokenKindToString(token: KeywordTokenKind): string {
 		case TokenKind.VarKeyword: return 'var';
 		case TokenKind.LetKeyword: return 'let';
 		case TokenKind.ExistsKeyword: return 'exists';
-		default: {
-			// exhaustiveness check
-			const _token: never = token;
-			throw new TypeError(`Unknown keyword token kind ${_token}`);
-		}
+		default: return mustBeNever(token, (t: string) => `Unknown keyword token kind: ${t}`);
 	}
 }

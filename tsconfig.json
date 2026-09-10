@@ -14,11 +14,10 @@
     "rootDir": "./src",
 		"outDir": "built",
 
-		"noImplicitAny": true,
+		"strict": true,
 		"noImplicitReturns": true,
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedIndexedAccess": true,
-		"strictNullChecks": true,
 		"forceConsistentCasingInFileNames": true
 	},
 	"compileOnSave": false,

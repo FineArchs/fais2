@@ -4,7 +4,7 @@ export function autobind<T extends (...args: never[]) => unknown>(target: object
 	return {
 		configurable: true,
 		get(): T {
-			const bound = fn.bind(this);
+			const bound = fn.bind(this) as T;
 
 			Object.defineProperty(this, key, {
 				configurable: true,

@@ -54,7 +54,7 @@ export interface ITokenStream {
 export class TokenStream implements ITokenStream {
 	private source: Token[];
 	private index: number;
-	private _token: Token;
+	private _token!: Token;
 
 	constructor(source: TokenStream['source']) {
 		this.source = source;

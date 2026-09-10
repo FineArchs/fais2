@@ -8,9 +8,11 @@ import type { Value, VArr, VFn, VNum, VStr, VError } from './value.js';
 
 type VWithPP = VNum|VStr|VArr|VError;
 
-const PRIMITIVE_PROPS: {
-	[key in VWithPP['type']]: { [key: string]: (target: Value) => Value }
-} = {
+type PrimitiveProps = {
+	[type in VWithPP['type']]: Record<string, (target: Extract<VWithPP, { type: type }>) => Value>;
+};
+
+const PRIMITIVE_PROPS: PrimitiveProps = {
 	num: {
 		to_str: (target: VNum): VFn => FN_NATIVE((_, _opts) => {
 			return STR(target.value.toString());
@@ -525,15 +527,20 @@ const PRIMITIVE_PROPS: {
 	},
 } as const;
 
-export function getPrimProp(target: Value, name: string): Value {
-	if (Object.hasOwn(PRIMITIVE_PROPS, target.type)) {
-		const props = PRIMITIVE_PROPS[target.type as VWithPP['type']];
-		if (Object.hasOwn(props, name)) {
-			return props[name]!(target);
-		} else {
-			throw new AiScriptRuntimeError(`No such prop (${name}) in ${target.type}.`);
-		}
+function getProp<T extends VWithPP>(target: T, props: Record<string, (target: T) => Value>, name: string): Value {
+	if (Object.hasOwn(props, name)) {
+		return props[name]!(target);
 	} else {
-		throw new AiScriptRuntimeError(`Cannot read prop of ${target.type}. (reading ${name})`);
+		throw new AiScriptRuntimeError(`No such prop (${name}) in ${target.type}.`);
+	}
+}
+
+export function getPrimProp(target: Value, name: string): Value {
+	switch (target.type) {
+		case 'num': return getProp(target, PRIMITIVE_PROPS.num, name);
+		case 'str': return getProp(target, PRIMITIVE_PROPS.str, name);
+		case 'arr': return getProp(target, PRIMITIVE_PROPS.arr, name);
+		case 'error': return getProp(target, PRIMITIVE_PROPS.error, name);
+		default: throw new AiScriptRuntimeError(`Cannot read prop of ${target.type}. (reading ${name})`);
 	}
 }

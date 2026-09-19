@@ -2,18 +2,16 @@ import { isControl, unWrapLabeledBreak, type Control } from '../control.js';
 import { assertBoolean, eq } from '../util.js';
 import { NULL, type Value } from '../value.js';
 import { evalNode, evalNodeSync, evalClause, evalClauseSync } from './operations.js';
-import type * as Ast from '../../node.js';
-import type { Scope } from '../scope.js';
-import type { CallInfo, EvalRuntime } from './runtime.js';
+import type { PartialEvaluatorRecord } from './evaluator.js';
 
-export async function evaluate(
-	runtime: EvalRuntime,
-	node: Ast.Node,
-	scope: Scope,
-	callStack: readonly CallInfo[],
-): Promise<Value | Control> {
-	switch (node.type) {
-		case 'if': {
+export const libEvalCondition = {
+	if: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
 			const cond = await evalNode(runtime, node.cond, scope, callStack);
 			if (isControl(cond)) {
 				return cond;
@@ -36,40 +34,13 @@ export async function evaluate(
 				return unWrapLabeledBreak(await evalClause(runtime, node.else, scope, callStack), node.label);
 			}
 			return NULL;
-		}
-
-		case 'match': {
-			const about = await evalNode(runtime, node.about, scope, callStack);
-			if (isControl(about)) {
-				return about;
-			}
-			for (const qa of node.qs) {
-				const q = await evalNode(runtime, qa.q, scope, callStack);
-				if (isControl(q)) {
-					return q;
-				}
-				if (eq(about, q)) {
-					return unWrapLabeledBreak(await evalClause(runtime, qa.a, scope, callStack), node.label);
-				}
-			}
-			if (node.default) {
-				return unWrapLabeledBreak(await evalClause(runtime, node.default, scope, callStack), node.label);
-			}
-			return NULL;
-		}
-
-		default: throw new Error('invalid node type');
-	}
-}
-
-export function evaluateSync(
-	runtime: EvalRuntime,
-	node: Ast.Node,
-	scope: Scope,
-	callStack: readonly CallInfo[],
-): Value | Control {
-	switch (node.type) {
-		case 'if': {
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			const cond = evalNodeSync(runtime, node.cond, scope, callStack);
 			if (isControl(cond)) {
 				return cond;
@@ -92,9 +63,39 @@ export function evaluateSync(
 				return unWrapLabeledBreak(evalClauseSync(runtime, node.else, scope, callStack), node.label);
 			}
 			return NULL;
-		}
-
-		case 'match': {
+		},
+	},
+	match: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			const about = await evalNode(runtime, node.about, scope, callStack);
+			if (isControl(about)) {
+				return about;
+			}
+			for (const qa of node.qs) {
+				const q = await evalNode(runtime, qa.q, scope, callStack);
+				if (isControl(q)) {
+					return q;
+				}
+				if (eq(about, q)) {
+					return unWrapLabeledBreak(await evalClause(runtime, qa.a, scope, callStack), node.label);
+				}
+			}
+			if (node.default) {
+				return unWrapLabeledBreak(await evalClause(runtime, node.default, scope, callStack), node.label);
+			}
+			return NULL;
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			const about = evalNodeSync(runtime, node.about, scope, callStack);
 			if (isControl(about)) {
 				return about;
@@ -112,8 +113,6 @@ export function evaluateSync(
 				return unWrapLabeledBreak(evalClauseSync(runtime, node.default, scope, callStack), node.label);
 			}
 			return NULL;
-		}
-
-		default: throw new Error('invalid node type');
-	}
-}
+		},
+	},
+} satisfies PartialEvaluatorRecord;

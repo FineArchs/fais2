@@ -1,59 +1,11 @@
-import { type Control } from '../control.js';
-import { BOOL, NULL, NUM, STR, type Value } from '../value.js';
-import type * as Ast from '../../node.js';
-import type { Scope } from '../scope.js';
-import type { CallInfo, EvalRuntime } from './runtime.js';
+import { BOOL, NULL, NUM, STR } from '../value.js';
+import type { PartialEvaluatorRecord } from './evaluator.js';
 
-export async function evaluate(
-	runtime: EvalRuntime,
-	node: Ast.Node,
-	scope: Scope,
-	callStack: readonly CallInfo[],
-): Promise<Value | Control> {
-	switch (node.type) {
-		case 'null': return NULL;
-
-		case 'bool': return BOOL(node.value);
-
-		case 'num': return NUM(node.value);
-
-		case 'str': return STR(node.value);
-
-		case 'ns': {
-			return NULL; // nop
-		}
-
-		case 'meta': {
-			return NULL; // nop
-		}
-
-		default: throw new Error('invalid node type');
-	}
-}
-
-export function evaluateSync(
-	runtime: EvalRuntime,
-	node: Ast.Node,
-	scope: Scope,
-	callStack: readonly CallInfo[],
-): Value | Control {
-	switch (node.type) {
-		case 'null': return NULL;
-
-		case 'bool': return BOOL(node.value);
-
-		case 'num': return NUM(node.value);
-
-		case 'str': return STR(node.value);
-
-		case 'ns': {
-			return NULL; // nop
-		}
-
-		case 'meta': {
-			return NULL; // nop
-		}
-
-		default: throw new Error('invalid node type');
-	}
-}
+export const libEvalLiteral = {
+	null: () => NULL,
+	bool: (_runtime, node) => BOOL(node.value),
+	num: (_runtime, node) => NUM(node.value),
+	str: (_runtime, node) => STR(node.value),
+	ns: () => NULL,
+	meta: () => NULL,
+} satisfies PartialEvaluatorRecord;

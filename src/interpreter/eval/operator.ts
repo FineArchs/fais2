@@ -2,223 +2,345 @@ import { isControl, type Control } from '../control.js';
 import { assertBoolean, assertNumber } from '../util.js';
 import { BOOL, NUM, type Value } from '../value.js';
 import { evalNode, evalNodeSync, evalBinaryOperation, evalBinaryOperationSync } from './operations.js';
-import type * as Ast from '../../node.js';
-import type { Scope } from '../scope.js';
-import type { CallInfo, EvalRuntime } from './runtime.js';
+import type { PartialEvaluatorRecord } from './evaluator.js';
 
-export async function evaluate(
-	runtime: EvalRuntime,
-	node: Ast.Node,
-	scope: Scope,
-	callStack: readonly CallInfo[],
-): Promise<Value | Control> {
-	switch (node.type) {
-		case 'plus': {
+export const libEvalOperator = {
+	plus: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
 			const v = await evalNode(runtime, node.expr, scope, callStack);
 			if (isControl(v)) {
 				return v;
 			}
 			assertNumber(v);
 			return v;
-		}
-
-		case 'minus': {
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
+			const v = evalNodeSync(runtime, node.expr, scope, callStack);
+			if (isControl(v)) {
+				return v;
+			}
+			assertNumber(v);
+			return v;
+		},
+	},
+	minus: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
 			const v = await evalNode(runtime, node.expr, scope, callStack);
 			if (isControl(v)) {
 				return v;
 			}
 			assertNumber(v);
 			return NUM(-v.value);
-		}
-
-		case 'not': {
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
+			const v = evalNodeSync(runtime, node.expr, scope, callStack);
+			if (isControl(v)) {
+				return v;
+			}
+			assertNumber(v);
+			return NUM(-v.value);
+		},
+	},
+	not: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
 			const v = await evalNode(runtime, node.expr, scope, callStack);
 			if (isControl(v)) {
 				return v;
 			}
 			assertBoolean(v);
 			return BOOL(!v.value);
-		}
-
-		case 'pow': {
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
+			const v = evalNodeSync(runtime, node.expr, scope, callStack);
+			if (isControl(v)) {
+				return v;
+			}
+			assertBoolean(v);
+			return BOOL(!v.value);
+		},
+	},
+	pow: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
 			return evalBinaryOperation(runtime, 'Core:pow', node.left, node.right, scope, callStack);
-		}
-
-		case 'mul': {
-			return evalBinaryOperation(runtime, 'Core:mul', node.left, node.right, scope, callStack);
-		}
-
-		case 'div': {
-			return evalBinaryOperation(runtime, 'Core:div', node.left, node.right, scope, callStack);
-		}
-
-		case 'rem': {
-			return evalBinaryOperation(runtime, 'Core:mod', node.left, node.right, scope, callStack);
-		}
-
-		case 'add': {
-			return evalBinaryOperation(runtime, 'Core:add', node.left, node.right, scope, callStack);
-		}
-
-		case 'sub': {
-			return evalBinaryOperation(runtime, 'Core:sub', node.left, node.right, scope, callStack);
-		}
-
-		case 'lt': {
-			return evalBinaryOperation(runtime, 'Core:lt', node.left, node.right, scope, callStack);
-		}
-
-		case 'lteq': {
-			return evalBinaryOperation(runtime, 'Core:lteq', node.left, node.right, scope, callStack);
-		}
-
-		case 'gt': {
-			return evalBinaryOperation(runtime, 'Core:gt', node.left, node.right, scope, callStack);
-		}
-
-		case 'gteq': {
-			return evalBinaryOperation(runtime, 'Core:gteq', node.left, node.right, scope, callStack);
-		}
-
-		case 'eq': {
-			return evalBinaryOperation(runtime, 'Core:eq', node.left, node.right, scope, callStack);
-		}
-
-		case 'neq': {
-			return evalBinaryOperation(runtime, 'Core:neq', node.left, node.right, scope, callStack);
-		}
-
-		case 'and': {
-			const leftValue = await evalNode(runtime, node.left, scope, callStack);
-			if (isControl(leftValue)) {
-				return leftValue;
-			}
-			assertBoolean(leftValue);
-
-			if (!leftValue.value) {
-				return leftValue;
-			} else {
-				const rightValue = await evalNode(runtime, node.right, scope, callStack);
-				if (isControl(rightValue)) {
-					return rightValue;
-				}
-				assertBoolean(rightValue);
-				return rightValue;
-			}
-		}
-
-		case 'or': {
-			const leftValue = await evalNode(runtime, node.left, scope, callStack);
-			if (isControl(leftValue)) {
-				return leftValue;
-			}
-			assertBoolean(leftValue);
-
-			if (leftValue.value) {
-				return leftValue;
-			} else {
-				const rightValue = await evalNode(runtime, node.right, scope, callStack);
-				if (isControl(rightValue)) {
-					return rightValue;
-				}
-				assertBoolean(rightValue);
-				return rightValue;
-			}
-		}
-
-		default: throw new Error('invalid node type');
-	}
-}
-
-export function evaluateSync(
-	runtime: EvalRuntime,
-	node: Ast.Node,
-	scope: Scope,
-	callStack: readonly CallInfo[],
-): Value | Control {
-	switch (node.type) {
-		case 'plus': {
-			const v = evalNodeSync(runtime, node.expr, scope, callStack);
-			if (isControl(v)) {
-				return v;
-			}
-			assertNumber(v);
-			return v;
-		}
-
-		case 'minus': {
-			const v = evalNodeSync(runtime, node.expr, scope, callStack);
-			if (isControl(v)) {
-				return v;
-			}
-			assertNumber(v);
-			return NUM(-v.value);
-		}
-
-		case 'not': {
-			const v = evalNodeSync(runtime, node.expr, scope, callStack);
-			if (isControl(v)) {
-				return v;
-			}
-			assertBoolean(v);
-			return BOOL(!v.value);
-		}
-
-		case 'pow': {
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			return evalBinaryOperationSync(runtime, 'Core:pow', node.left, node.right, scope, callStack);
-		}
-
-		case 'mul': {
+		},
+	},
+	mul: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			return evalBinaryOperation(runtime, 'Core:mul', node.left, node.right, scope, callStack);
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			return evalBinaryOperationSync(runtime, 'Core:mul', node.left, node.right, scope, callStack);
-		}
-
-		case 'div': {
+		},
+	},
+	div: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			return evalBinaryOperation(runtime, 'Core:div', node.left, node.right, scope, callStack);
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			return evalBinaryOperationSync(runtime, 'Core:div', node.left, node.right, scope, callStack);
-		}
-
-		case 'rem': {
+		},
+	},
+	rem: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			return evalBinaryOperation(runtime, 'Core:mod', node.left, node.right, scope, callStack);
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			return evalBinaryOperationSync(runtime, 'Core:mod', node.left, node.right, scope, callStack);
-		}
-
-		case 'add': {
+		},
+	},
+	add: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			return evalBinaryOperation(runtime, 'Core:add', node.left, node.right, scope, callStack);
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			return evalBinaryOperationSync(runtime, 'Core:add', node.left, node.right, scope, callStack);
-		}
-
-		case 'sub': {
+		},
+	},
+	sub: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			return evalBinaryOperation(runtime, 'Core:sub', node.left, node.right, scope, callStack);
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			return evalBinaryOperationSync(runtime, 'Core:sub', node.left, node.right, scope, callStack);
-		}
-
-		case 'lt': {
+		},
+	},
+	lt: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			return evalBinaryOperation(runtime, 'Core:lt', node.left, node.right, scope, callStack);
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			return evalBinaryOperationSync(runtime, 'Core:lt', node.left, node.right, scope, callStack);
-		}
-
-		case 'lteq': {
+		},
+	},
+	lteq: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			return evalBinaryOperation(runtime, 'Core:lteq', node.left, node.right, scope, callStack);
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			return evalBinaryOperationSync(runtime, 'Core:lteq', node.left, node.right, scope, callStack);
-		}
-
-		case 'gt': {
+		},
+	},
+	gt: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			return evalBinaryOperation(runtime, 'Core:gt', node.left, node.right, scope, callStack);
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			return evalBinaryOperationSync(runtime, 'Core:gt', node.left, node.right, scope, callStack);
-		}
-
-		case 'gteq': {
+		},
+	},
+	gteq: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			return evalBinaryOperation(runtime, 'Core:gteq', node.left, node.right, scope, callStack);
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			return evalBinaryOperationSync(runtime, 'Core:gteq', node.left, node.right, scope, callStack);
-		}
-
-		case 'eq': {
+		},
+	},
+	eq: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			return evalBinaryOperation(runtime, 'Core:eq', node.left, node.right, scope, callStack);
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			return evalBinaryOperationSync(runtime, 'Core:eq', node.left, node.right, scope, callStack);
-		}
-
-		case 'neq': {
+		},
+	},
+	neq: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			return evalBinaryOperation(runtime, 'Core:neq', node.left, node.right, scope, callStack);
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			return evalBinaryOperationSync(runtime, 'Core:neq', node.left, node.right, scope, callStack);
-		}
-
-		case 'and': {
+		},
+	},
+	and: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			const leftValue = await evalNode(runtime, node.left, scope, callStack);
+			if (isControl(leftValue)) {
+				return leftValue;
+			}
+			assertBoolean(leftValue);
+		
+			if (!leftValue.value) {
+				return leftValue;
+			} else {
+				const rightValue = await evalNode(runtime, node.right, scope, callStack);
+				if (isControl(rightValue)) {
+					return rightValue;
+				}
+				assertBoolean(rightValue);
+				return rightValue;
+			}
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			const leftValue = evalNodeSync(runtime, node.left, scope, callStack);
 			if (isControl(leftValue)) {
 				return leftValue;
 			}
 			assertBoolean(leftValue);
-
+		
 			if (!leftValue.value) {
 				return leftValue;
 			} else {
@@ -229,15 +351,44 @@ export function evaluateSync(
 				assertBoolean(rightValue);
 				return rightValue;
 			}
-		}
-
-		case 'or': {
+		},
+	},
+	or: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			const leftValue = await evalNode(runtime, node.left, scope, callStack);
+			if (isControl(leftValue)) {
+				return leftValue;
+			}
+			assertBoolean(leftValue);
+		
+			if (leftValue.value) {
+				return leftValue;
+			} else {
+				const rightValue = await evalNode(runtime, node.right, scope, callStack);
+				if (isControl(rightValue)) {
+					return rightValue;
+				}
+				assertBoolean(rightValue);
+				return rightValue;
+			}
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			const leftValue = evalNodeSync(runtime, node.left, scope, callStack);
 			if (isControl(leftValue)) {
 				return leftValue;
 			}
 			assertBoolean(leftValue);
-
+		
 			if (leftValue.value) {
 				return leftValue;
 			} else {
@@ -248,8 +399,6 @@ export function evaluateSync(
 				assertBoolean(rightValue);
 				return rightValue;
 			}
-		}
-
-		default: throw new Error('invalid node type');
-	}
-}
+		},
+	},
+} satisfies PartialEvaluatorRecord;

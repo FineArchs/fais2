@@ -2,18 +2,16 @@ import { isControl, type Control } from '../control.js';
 import { assertArray, assertNumber } from '../util.js';
 import { NULL, NUM, type Value } from '../value.js';
 import { evalNode, evalNodeSync, evalClause, evalClauseSync, run, runSync, define } from './operations.js';
-import type * as Ast from '../../node.js';
-import type { Scope } from '../scope.js';
-import type { CallInfo, EvalRuntime } from './runtime.js';
+import type { PartialEvaluatorRecord } from './evaluator.js';
 
-export async function evaluate(
-	runtime: EvalRuntime,
-	node: Ast.Node,
-	scope: Scope,
-	callStack: readonly CallInfo[],
-): Promise<Value | Control> {
-	switch (node.type) {
-		case 'loop': {
+export const libEvalLoop = {
+	loop: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
 			while (true) {
 				const v = await run(runtime, node.statements, scope.createChildScope(), callStack);
 				if (v.type === 'break') {
@@ -30,9 +28,38 @@ export async function evaluate(
 				}
 			}
 			return NULL;
-		}
-
-		case 'for': {
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
+			while (true) {
+				const v = runSync(runtime, node.statements, scope.createChildScope(), callStack);
+				if (v.type === 'break') {
+					if (v.label != null && v.label !== node.label) {
+						return v;
+					}
+					break;
+				} else if (v.type === 'continue') {
+					if (v.label != null && v.label !== node.label) {
+						return v;
+					}
+				} else if (v.type === 'return') {
+					return v;
+				}
+			}
+			return NULL;
+		},
+	},
+	for: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
 			if (node.times) {
 				const times = await evalNode(runtime, node.times, scope, callStack);
 				if (isControl(times)) {
@@ -87,65 +114,13 @@ export async function evaluate(
 				}
 			}
 			return NULL;
-		}
-
-		case 'each': {
-			const items = await evalNode(runtime, node.items, scope, callStack);
-			if (isControl(items)) {
-				return items;
-			}
-			assertArray(items);
-			for (const item of items.value) {
-				const eachScope = scope.createChildScope();
-				define(runtime, eachScope, node.var, item, false);
-				const v = await evalNode(runtime, node.for, eachScope, callStack);
-				if (v.type === 'break') {
-					if (v.label != null && v.label !== node.label) {
-						return v;
-					}
-					break;
-				} else if (v.type === 'continue') {
-					if (v.label != null && v.label !== node.label) {
-						return v;
-					}
-				} else if (v.type === 'return') {
-					return v;
-				}
-			}
-			return NULL;
-		}
-
-		default: throw new Error('invalid node type');
-	}
-}
-
-export function evaluateSync(
-	runtime: EvalRuntime,
-	node: Ast.Node,
-	scope: Scope,
-	callStack: readonly CallInfo[],
-): Value | Control {
-	switch (node.type) {
-		case 'loop': {
-			while (true) {
-				const v = runSync(runtime, node.statements, scope.createChildScope(), callStack);
-				if (v.type === 'break') {
-					if (v.label != null && v.label !== node.label) {
-						return v;
-					}
-					break;
-				} else if (v.type === 'continue') {
-					if (v.label != null && v.label !== node.label) {
-						return v;
-					}
-				} else if (v.type === 'return') {
-					return v;
-				}
-			}
-			return NULL;
-		}
-
-		case 'for': {
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			if (node.times) {
 				const times = evalNodeSync(runtime, node.times, scope, callStack);
 				if (isControl(times)) {
@@ -200,9 +175,45 @@ export function evaluateSync(
 				}
 			}
 			return NULL;
-		}
-
-		case 'each': {
+		},
+	},
+	each: {
+		async: async (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Promise<Value | Control> => {
+			const items = await evalNode(runtime, node.items, scope, callStack);
+			if (isControl(items)) {
+				return items;
+			}
+			assertArray(items);
+			for (const item of items.value) {
+				const eachScope = scope.createChildScope();
+				define(runtime, eachScope, node.var, item, false);
+				const v = await evalNode(runtime, node.for, eachScope, callStack);
+				if (v.type === 'break') {
+					if (v.label != null && v.label !== node.label) {
+						return v;
+					}
+					break;
+				} else if (v.type === 'continue') {
+					if (v.label != null && v.label !== node.label) {
+						return v;
+					}
+				} else if (v.type === 'return') {
+					return v;
+				}
+			}
+			return NULL;
+		},
+		sync: (
+			runtime,
+			node,
+			scope,
+			callStack,
+		): Value | Control => {
 			const items = evalNodeSync(runtime, node.items, scope, callStack);
 			if (isControl(items)) {
 				return items;
@@ -226,8 +237,6 @@ export function evaluateSync(
 				}
 			}
 			return NULL;
-		}
-
-		default: throw new Error('invalid node type');
-	}
-}
+		},
+	},
+} satisfies PartialEvaluatorRecord;

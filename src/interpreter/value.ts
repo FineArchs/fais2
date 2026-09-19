@@ -1,6 +1,7 @@
 import type { Expression, Node } from '../node.js';
 import type { Type } from '../type.js';
 import type { Scope } from './scope.js';
+import type { FunctionImplementation } from '../utils/function-implementation.js';
 
 export type VNull = {
 	type: 'null';
@@ -77,10 +78,12 @@ type NativeFunctionSync = (args: (Value | undefined)[], opts: {
 		unregisterUnpauseHandler: (handler: () => void) => void;
 	}) => Value | void;
 
-type NativeFunction = NativeFunctionSync | {
-	sync?: NativeFunctionSync;
-	async: NativeFunctionAsync;
-};
+type NativeFunction = FunctionImplementation<
+	Parameters<NativeFunctionSync>,
+	ReturnType<NativeFunctionSync>,
+	Parameters<NativeFunctionAsync>,
+	Awaited<ReturnType<NativeFunctionAsync>>
+>;
 
 export type VError = {
 	type: 'error';

@@ -10,7 +10,7 @@ import { Scope } from './scope.js';
 import { std } from './lib/std.js';
 import { assertValue } from './control.js';
 import { assertString, expectAny, isFunction } from './util.js';
-import { NULL, FN_NATIVE, STR, ERROR } from './value.js';
+import { NULL, FN_NATIVE, FN_NATIVE_ASYNC, STR, ERROR } from './value.js';
 import { Variable } from './variable.js';
 import { call, callSync, define, evalNode, evalNodeSync, log, run, runSync, setAttributes, setAttributesSync } from './eval/operations.js';
 import type * as Ast from '../node.js';
@@ -53,13 +53,13 @@ export class Interpreter {
 				expectAny(v);
 				if (this.opts.out) this.opts.out(v);
 			}),
-			readline: FN_NATIVE({ async: async args => {
+			readline: FN_NATIVE_ASYNC(async args => {
 				const q = args[0];
 				assertString(q);
 				if (this.opts.in == null) return NULL;
 				const a = await this.opts.in(q.value);
 				return STR(a);
-			} }),
+			}),
 		};
 
 		this.vars = Object.fromEntries(Object.entries({

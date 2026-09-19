@@ -1,4 +1,4 @@
-import { NUM, FN_NATIVE, NULL } from '../value.js';
+import { NUM, FN_NATIVE, FN_NATIVE_ASYNC, NULL } from '../value.js';
 import { assertNumber, expectAny, assertArray } from '../util.js';
 import { AiScriptRuntimeError } from '../../error.js';
 import { CryptoGen } from '../../utils/random/CryptoGen.js';
@@ -206,7 +206,7 @@ export const stdMath: Record<`Math:${string}`, Value> = {
 		return NUM(CryptoGen.instance.generateNumber0To1());
 	}),
 
-	'Math:gen_rng': FN_NATIVE({ async: async ([seed, options]) => {
+	'Math:gen_rng': FN_NATIVE_ASYNC(async ([seed, options]) => {
 		expectAny(seed);
 		const isSecureContext = 'subtle' in crypto;
 		let algo = isSecureContext ? 'chacha20' : 'rc4_legacy';
@@ -233,5 +233,5 @@ export const stdMath: Record<`Math:${string}`, Value> = {
 			default:
 				throw new AiScriptRuntimeError('`options.algorithm` must be one of these: `chacha20`, `rc4`, or `rc4_legacy`.');
 		}
-	} }),
+	}),
 };

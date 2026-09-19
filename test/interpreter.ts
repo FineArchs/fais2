@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest';
 import { Parser, Interpreter, utils } from '../src';
 import { AiScriptHostsideError } from '../src/error';
-import { FALSE, NUM, OBJ, STR, TRUE, FN_NATIVE } from '../src/interpreter/value';
+import { FALSE, NUM, OBJ, STR, TRUE, FN_NATIVE, FN_NATIVE_ASYNC } from '../src/interpreter/value';
 import type { Ast } from '../src';
 import type { Value } from '../src/interpreter/value';
 
@@ -47,7 +47,7 @@ describe('native function sync execution', () => {
 	test('rejects an async-only function before invoking it', () => {
 		const invoked = vi.fn();
 		const interpreter = new Interpreter({
-			hostFn: FN_NATIVE({ async: async () => { invoked(); } }),
+			hostFn: FN_NATIVE_ASYNC(async () => { invoked(); }),
 		});
 
 		expect(() => interpreter.execSync(Parser.parse('hostFn()')))
@@ -78,12 +78,12 @@ describe('error handler', () => {
 			emitError: FN_NATIVE((_args, _opts) => {
 				throw Error('emitError');
 			}),
-			genOutsideCaller: FN_NATIVE({ async: ([fn], opts) => {
+			genOutsideCaller: FN_NATIVE_ASYNC(([fn], opts) => {
 				utils.assertFunction(fn);
 				outsideCaller = async () => {
 					await opts.topCall(fn, []);
 				};
-			} }),
+			}),
 		}, {
 			err(e) { /*console.log(e.toString());*/ errCount++; },
 		});

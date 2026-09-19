@@ -160,6 +160,8 @@ export function FN_NATIVE(fn: NativeFunction): VNativeFn {
 	};
 }
 
+export const FN_NATIVE_ASYNC = (fn: NativeFunctionAsync): VNativeFn => FN_NATIVE({ async: fn });
+
 export const ERROR = (name: string, info?: Value): Value => ({
 	type: 'error' as const,
 	value: name,

@@ -1,6 +1,6 @@
 /* eslint-disable no-empty-pattern */
 import { v4 as uuid } from 'uuid';
-import { NUM, STR, FN_NATIVE, FALSE, TRUE, ARR, NULL, BOOL, OBJ, ERROR } from '../value.js';
+import { NUM, STR, FN_NATIVE, FN_NATIVE_ASYNC, FALSE, TRUE, ARR, NULL, BOOL, OBJ, ERROR } from '../value.js';
 import { assertNumber, assertString, assertBoolean, valToJs, jsToVal, assertFunction, assertObject, eq, expectAny, assertArray, reprValue } from '../util.js';
 import { AiScriptRuntimeError, AiScriptUserError } from '../../error.js';
 import { VERSION } from '../../constants.js';
@@ -137,15 +137,15 @@ export const std: Record<string, Value> = {
 			return ARR([a]);
 		}
 	}),
-	'Core:sleep': FN_NATIVE({ async: async ([delay]) => {
+	'Core:sleep': FN_NATIVE_ASYNC(async ([delay]) => {
 		assertNumber(delay);
 		await new Promise((r) => setTimeout(r, delay.value));
 		return NULL;
-	} }),
-	'Core:abort': FN_NATIVE({ async: async ([message]) => {
+	}),
+	'Core:abort': FN_NATIVE_ASYNC(async ([message]) => {
 		assertString(message);
 		throw new AiScriptUserError(message.value);
-	} }),
+	}),
 	//#endregion
 
 	//#region Util
@@ -433,7 +433,7 @@ export const std: Record<string, Value> = {
 	//#endregion
 
 	//#region Async
-	'Async:interval': FN_NATIVE({ async: async ([interval, callback, immediate], opts) => {
+	'Async:interval': FN_NATIVE_ASYNC(async ([interval, callback, immediate], opts) => {
 		assertNumber(interval);
 		assertFunction(callback);
 		if (immediate) {
@@ -465,9 +465,9 @@ export const std: Record<string, Value> = {
 			stop();
 			opts.unregisterUnpauseHandler(start);
 		});
-	} }),
+	}),
 
-	'Async:timeout': FN_NATIVE({ async: async ([delay, callback], opts) => {
+	'Async:timeout': FN_NATIVE_ASYNC(async ([delay, callback], opts) => {
 		assertNumber(delay);
 		assertFunction(callback);
 
@@ -497,6 +497,6 @@ export const std: Record<string, Value> = {
 			stop();
 			opts.unregisterUnpauseHandler(start);
 		});
-	} }),
+	}),
 	//#endregion
 };

@@ -12,7 +12,7 @@ import { assertValue } from './control.js';
 import { assertString, expectAny, isFunction } from './util.js';
 import { NULL, FN_NATIVE, STR, ERROR } from './value.js';
 import { Variable } from './variable.js';
-import { call, callSync, define, evalNode, evalNodeSync, log, run, runSync, setAttributes, setAttributesSync } from './evaluator/operations.js';
+import { call, callSync, define, evalNode, evalNodeSync, log, run, runSync, setAttributes, setAttributesSync } from './eval/operations.js';
 import type * as Ast from '../node.js';
 import type { JsValue } from './util.js';
 import type { Value, VFn } from './value.js';

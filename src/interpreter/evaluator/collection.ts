@@ -3,12 +3,13 @@ import { isControl, type Control } from '../control.js';
 import { getPrimProp } from '../primitive-props.js';
 import { assertNumber, assertString, isArray, isObject, reprValue } from '../util.js';
 import { ARR, NULL, OBJ, STR, type Value } from '../value.js';
+import { evalNode, evalNodeSync } from './operations.js';
 import type * as Ast from '../../node.js';
 import type { Scope } from '../scope.js';
-import type { CallInfo, EvalContext } from './context.js';
+import type { CallInfo, EvalRuntime } from './runtime.js';
 
 export async function evaluate(
-	context: EvalContext,
+	runtime: EvalRuntime,
 	node: Ast.Node,
 	scope: Scope,
 	callStack: readonly CallInfo[],
@@ -17,7 +18,7 @@ export async function evaluate(
 		case 'arr': {
 			const value = [];
 			for (const item of node.value) {
-				const valueItem = await context.eval(item, scope, callStack);
+				const valueItem = await evalNode(runtime, item, scope, callStack);
 				if (isControl(valueItem)) {
 					return valueItem;
 				}
@@ -29,7 +30,7 @@ export async function evaluate(
 		case 'obj': {
 			const obj = new Map<string, Value>();
 			for (const [key, valueExpr] of node.value) {
-				const value = await context.eval(valueExpr, scope, callStack);
+				const value = await evalNode(runtime, valueExpr, scope, callStack);
 				if (isControl(value)) {
 					return value;
 				}
@@ -39,7 +40,7 @@ export async function evaluate(
 		}
 
 		case 'prop': {
-			const target = await context.eval(node.target, scope, callStack);
+			const target = await evalNode(runtime, node.target, scope, callStack);
 			if (isControl(target)) {
 				return target;
 			}
@@ -55,11 +56,11 @@ export async function evaluate(
 		}
 
 		case 'index': {
-			const target = await context.eval(node.target, scope, callStack);
+			const target = await evalNode(runtime, node.target, scope, callStack);
 			if (isControl(target)) {
 				return target;
 			}
-			const i = await context.eval(node.index, scope, callStack);
+			const i = await evalNode(runtime, node.index, scope, callStack);
 			if (isControl(i)) {
 				return i;
 			}
@@ -85,7 +86,7 @@ export async function evaluate(
 		case 'tmpl': {
 			let str = '';
 			for (const x of node.tmpl) {
-				const v = await context.eval(x, scope, callStack);
+				const v = await evalNode(runtime, x, scope, callStack);
 				if (isControl(v)) {
 					return v;
 				}
@@ -99,7 +100,7 @@ export async function evaluate(
 }
 
 export function evaluateSync(
-	context: EvalContext,
+	runtime: EvalRuntime,
 	node: Ast.Node,
 	scope: Scope,
 	callStack: readonly CallInfo[],
@@ -108,7 +109,7 @@ export function evaluateSync(
 		case 'arr': {
 			const value = [];
 			for (const item of node.value) {
-				const valueItem = context.evalSync(item, scope, callStack);
+				const valueItem = evalNodeSync(runtime, item, scope, callStack);
 				if (isControl(valueItem)) {
 					return valueItem;
 				}
@@ -120,7 +121,7 @@ export function evaluateSync(
 		case 'obj': {
 			const obj = new Map<string, Value>();
 			for (const [key, valueExpr] of node.value) {
-				const value = context.evalSync(valueExpr, scope, callStack);
+				const value = evalNodeSync(runtime, valueExpr, scope, callStack);
 				if (isControl(value)) {
 					return value;
 				}
@@ -130,7 +131,7 @@ export function evaluateSync(
 		}
 
 		case 'prop': {
-			const target = context.evalSync(node.target, scope, callStack);
+			const target = evalNodeSync(runtime, node.target, scope, callStack);
 			if (isControl(target)) {
 				return target;
 			}
@@ -146,11 +147,11 @@ export function evaluateSync(
 		}
 
 		case 'index': {
-			const target = context.evalSync(node.target, scope, callStack);
+			const target = evalNodeSync(runtime, node.target, scope, callStack);
 			if (isControl(target)) {
 				return target;
 			}
-			const i = context.evalSync(node.index, scope, callStack);
+			const i = evalNodeSync(runtime, node.index, scope, callStack);
 			if (isControl(i)) {
 				return i;
 			}
@@ -176,7 +177,7 @@ export function evaluateSync(
 		case 'tmpl': {
 			let str = '';
 			for (const x of node.tmpl) {
-				const v = context.evalSync(x, scope, callStack);
+				const v = evalNodeSync(runtime, x, scope, callStack);
 				if (isControl(v)) {
 					return v;
 				}

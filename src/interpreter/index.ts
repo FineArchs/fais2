@@ -4,18 +4,16 @@
 
 import { autobind } from '../utils/mini-autobind.js';
 import { mustBeNever } from '../utils/mustbenever.js';
-import { AiScriptError, NonAiScriptError, AiScriptNamespaceError, AiScriptRuntimeError, AiScriptHostsideError } from '../error.js';
-import * as Ast from '../node.js';
+import { AiScriptError, NonAiScriptError, AiScriptNamespaceError, AiScriptHostsideError } from '../error.js';
 import { nodeToJs } from '../utils/node-to-js.js';
 import { Scope } from './scope.js';
 import { std } from './lib/std.js';
-import { unWrapRet, assertValue, isControl, type Control } from './control.js';
-import { assertNumber, assertString, assertFunction, assertObject, assertArray, isObject, isArray, expectAny, reprValue, isFunction } from './util.js';
+import { assertValue } from './control.js';
+import { assertString, expectAny, isFunction } from './util.js';
 import { NULL, FN_NATIVE, STR, ERROR } from './value.js';
 import { Variable } from './variable.js';
-import { Reference } from './reference.js';
-import { dispatch, dispatchSync } from './evaluator/dispatch.js';
-import type { CallInfo, EvalContext } from './evaluator/context.js';
+import { call, callSync, define, evalNode, evalNodeSync, log, run, runSync, setAttributes, setAttributesSync } from './evaluator/operations.js';
+import type * as Ast from '../node.js';
 import type { JsValue } from './util.js';
 import type { Value, VFn } from './value.js';
 
@@ -27,37 +25,19 @@ export type LogObject = {
 
 export class Interpreter {
 	public stepCount = 0;
-	private stop = false;
-	private pausing: { promise: Promise<void>, resolve: () => void } | null = null;
+	public stop = false;
+	public pausing: { promise: Promise<void>, resolve: () => void } | null = null;
 	public scope: Scope;
 	private abortHandlers: (() => void)[] = [];
 	private pauseHandlers: (() => void)[] = [];
 	private unpauseHandlers: (() => void)[] = [];
 	private vars: Record<string, Variable> = {};
-	private irqRate: number;
-	private irqSleep: () => Promise<void>;
-	private readonly evalContext: EvalContext = {
-		eval: (node, scope, callStack) => this._eval(node, scope, callStack),
-		evalSync: (node, scope, callStack) => this._evalSync(node, scope, callStack),
-		evalClause: (node, scope, callStack) => this._evalClause(node, scope, callStack),
-		evalClauseSync: (node, scope, callStack) => this._evalClauseSync(node, scope, callStack),
-		evalBinaryOperation: (op, left, right, scope, callStack) => this._evalBinaryOperation(op, left, right, scope, callStack),
-		evalBinaryOperationSync: (op, left, right, scope, callStack) => this._evalBinaryOperationSync(op, left, right, scope, callStack),
-		run: (nodes, scope, callStack) => this._run(nodes, scope, callStack),
-		runSync: (nodes, scope, callStack) => this._runSync(nodes, scope, callStack),
-		call: (fn, args, callStack, pos) => this._fn(fn, args, callStack, pos),
-		callSync: (fn, args, callStack, pos) => this._fnSync(fn, args, callStack, pos),
-		define: (scope, dest, value, mutable) => this.define(scope, dest, value, mutable),
-		getReference: (dest, scope, callStack) => this.getReference(dest, scope, callStack),
-		getReferenceSync: (dest, scope, callStack) => this.getReferenceSync(dest, scope, callStack),
-		setAttributes: (attr, value, scope, callStack) => this.evalAndSetAttr(attr, value, scope, callStack),
-		setAttributesSync: (attr, value, scope, callStack) => this.evalAndSetAttrSync(attr, value, scope, callStack),
-		log: (type, params) => this.log(type, params),
-	};
+	public irqRate: number;
+	public irqSleep: () => Promise<void>;
 
 	constructor(
 		consts: Record<string, Value>,
-		private opts: {
+		public opts: {
 			in?(q: string): Promise<string>;
 			out?(value: Value): void;
 			err?(e: AiScriptError): void;
@@ -91,9 +71,9 @@ export class Interpreter {
 		this.scope = new Scope([new Map(Object.entries(this.vars))]);
 		this.scope.opts.log = (type, params): void => {
 			switch (type) {
-				case 'add': this.log('var:add', params); break;
-				case 'read': this.log('var:read', params); break;
-				case 'write': this.log('var:write', params); break;
+				case 'add': log(this, 'var:add', params); break;
+				case 'read': log(this, 'var:read', params); break;
+				case 'write': log(this, 'var:write', params); break;
 				default: break;
 			}
 		};
@@ -123,9 +103,9 @@ export class Interpreter {
 		if (script == null || script.length === 0) return;
 		try {
 			await this.collectNs(script);
-			const result = await this._run(script, this.scope, []);
+			const result = await run(this, script, this.scope, []);
 			assertValue(result);
-			this.log('end', { val: result });
+			log(this, 'end', { val: result });
 		} catch (e) {
 			this.handleError(e);
 		}
@@ -135,7 +115,7 @@ export class Interpreter {
 	public execSync(script?: Ast.Node[]): Value | undefined {
 		if (script == null || script.length === 0) return;
 		this.collectNsSync(script);
-		const result = this._runSync(script, this.scope, []);
+		const result = runSync(this, script, this.scope, []);
 		assertValue(result);
 		return result;
 	}
@@ -150,7 +130,7 @@ export class Interpreter {
 	 */
 	@autobind
 	public async execFn(fn: VFn, args: Value[]): Promise<Value> {
-		return await this._fn(fn, args, [])
+		return await call(this, fn, args, [])
 			.catch(e => {
 				this.handleError(e);
 				return ERROR('func_failed');
@@ -167,7 +147,7 @@ export class Interpreter {
 	 */
 	@autobind
 	public execFnSync(fn: VFn, args: Value[]): Value {
-		return this._fnSync(fn, args, []);
+		return callSync(this, fn, args, []);
 	}
 
 	/**
@@ -178,7 +158,7 @@ export class Interpreter {
 	 */
 	@autobind
 	public execFnSimple(fn: VFn, args: Value[]): Promise<Value> {
-		return this._fn(fn, args, []);
+		return call(this, fn, args, []);
 	}
 
 	@autobind
@@ -216,11 +196,6 @@ export class Interpreter {
 		} else {
 			this.opts.err(new NonAiScriptError(e));
 		}
-	}
-
-	@autobind
-	private log(type: string, params: LogObject): void {
-		if (this.opts.log) this.opts.log(type, params);
 	}
 
 	@autobind
@@ -271,10 +246,10 @@ export class Interpreter {
 						throw new AiScriptNamespaceError('No "var" in namespace declaration: ' + node.dest.name, node.loc.start);
 					}
 
-					const value = await this._eval(node.expr, nsScope, []);
+					const value = await evalNode(this, node.expr, nsScope, []);
 					assertValue(value);
 
-					await this.evalAndSetAttr(node.attr, value, scope, []);
+					await setAttributes(this, node.attr, value, scope, []);
 
 					if (
 						node.expr.type === 'fn'
@@ -283,7 +258,7 @@ export class Interpreter {
 					) {
 						value.name = nsScope.getNsPrefix() + node.dest.name;
 					}
-					this.define(nsScope, node.dest, value, node.mut);
+					define(this, nsScope, node.dest, value, node.mut);
 
 					break;
 				}
@@ -315,10 +290,10 @@ export class Interpreter {
 						throw new AiScriptNamespaceError('No "var" in namespace declaration: ' + node.dest.name, node.loc.start);
 					}
 
-					const value = this._evalSync(node.expr, nsScope, []);
+					const value = evalNodeSync(this, node.expr, nsScope, []);
 					assertValue(value);
 
-					this.evalAndSetAttrSync(node.attr, value, scope, []);
+					setAttributesSync(this, node.attr, value, scope, []);
 
 					if (
 						node.expr.type === 'fn'
@@ -327,7 +302,7 @@ export class Interpreter {
 					) {
 						value.name = nsScope.getNsPrefix() + node.dest.name;
 					}
-					this.define(nsScope, node.dest, value, node.mut);
+					define(this, nsScope, node.dest, value, node.mut);
 
 					break;
 				}
@@ -341,215 +316,6 @@ export class Interpreter {
 				}
 			}
 		}
-	}
-
-	@autobind
-	private async _fn(fn: VFn, args: Value[], callStack: readonly CallInfo[], pos?: Ast.Pos): Promise<Value> {
-		if (fn.native) {
-			const info: CallInfo = { name: '<native>', pos };
-			const result = fn.native(args, {
-				call: (fn, args) => this._fn(fn, args, [...callStack, info]),
-				topCall: this.execFn,
-				registerAbortHandler: this.registerAbortHandler,
-				registerPauseHandler: this.registerPauseHandler,
-				registerUnpauseHandler: this.registerUnpauseHandler,
-				unregisterAbortHandler: this.unregisterAbortHandler,
-				unregisterPauseHandler: this.unregisterPauseHandler,
-				unregisterUnpauseHandler: this.unregisterUnpauseHandler,
-			});
-			return result ?? NULL;
-		} else {
-			const fnScope = fn.scope.createChildScope();
-			for (const [i, param] of fn.params.entries()) {
-				const arg = args[i];
-				if (!param.default) expectAny(arg);
-				this.define(fnScope, param.dest, arg ?? param.default!, true);
-			}
-
-			const info: CallInfo = { name: fn.name ?? '<anonymous>', pos };
-			return unWrapRet(await this._run(fn.statements, fnScope, [...callStack, info]));
-		}
-	}
-
-	@autobind
-	private _fnSync(fn: VFn, args: Value[], callStack: readonly CallInfo[], pos?: Ast.Pos): Value {
-		if (fn.native) {
-			const info: CallInfo = { name: '<native>', pos };
-			const result = fn.nativeSync ? fn.nativeSync(args, {
-				call: (fn, args) => this._fnSync(fn, args, [...callStack, info]),
-				topCall: this.execFnSync,
-				registerAbortHandler: this.registerAbortHandler,
-				registerPauseHandler: this.registerPauseHandler,
-				registerUnpauseHandler: this.registerUnpauseHandler,
-				unregisterAbortHandler: this.unregisterAbortHandler,
-				unregisterPauseHandler: this.unregisterPauseHandler,
-				unregisterUnpauseHandler: this.unregisterUnpauseHandler,
-			}) : fn.native(args, {
-				call: (fn, args) => this._fn(fn, args, [...callStack, info]),
-				topCall: this.execFn,
-				registerAbortHandler: this.registerAbortHandler,
-				registerPauseHandler: this.registerPauseHandler,
-				registerUnpauseHandler: this.registerUnpauseHandler,
-				unregisterAbortHandler: this.unregisterAbortHandler,
-				unregisterPauseHandler: this.unregisterPauseHandler,
-				unregisterUnpauseHandler: this.unregisterUnpauseHandler,
-			});
-			if (result instanceof Promise) {
-				throw new AiScriptHostsideError('Native function must not return a Promise in sync mode.');
-			}
-			return result ?? NULL;
-		} else {
-			const fnScope = fn.scope.createChildScope();
-			for (const [i, param] of fn.params.entries()) {
-				const arg = args[i];
-				if (!param.default) expectAny(arg);
-				this.define(fnScope, param.dest, arg ?? param.default!, true);
-			}
-
-			const info: CallInfo = { name: fn.name ?? '<anonymous>', pos };
-			return unWrapRet(this._runSync(fn.statements, fnScope, [...callStack, info]));
-		}
-	}
-
-	@autobind
-	private _evalClause(node: Ast.Statement | Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		return this._eval(node, Ast.isStatement(node) ? scope.createChildScope() : scope, callStack);
-	}
-
-	@autobind
-	private _evalClauseSync(node: Ast.Statement | Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		return this._evalSync(node, Ast.isStatement(node) ? scope.createChildScope() : scope, callStack);
-	}
-
-	@autobind
-	private async _evalBinaryOperation(op: string, leftExpr: Ast.Expression, rightExpr: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		const callee = scope.get(op);
-		assertFunction(callee);
-		const left = await this._eval(leftExpr, scope, callStack);
-		if (isControl(left)) {
-			return left;
-		}
-		const right = await this._eval(rightExpr, scope, callStack);
-		if (isControl(right)) {
-			return right;
-		}
-		return this._fn(callee, [left, right], callStack);
-	}
-
-	@autobind
-	private _evalBinaryOperationSync(op: string, leftExpr: Ast.Expression, rightExpr: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		const callee = scope.get(op);
-		assertFunction(callee);
-		const left = this._evalSync(leftExpr, scope, callStack);
-		if (isControl(left)) {
-			return left;
-		}
-		const right = this._evalSync(rightExpr, scope, callStack);
-		if (isControl(right)) {
-			return right;
-		}
-		return this._fnSync(callee, [left, right], callStack);
-	}
-
-	@autobind
-	private _eval(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		return this.__eval(node, scope, callStack).catch((e: unknown) => {
-			if (typeof e === 'object' && e !== null && 'pos' in e && e.pos) throw e;
-			else {
-				const e2 = (e instanceof AiScriptError) ? e : new NonAiScriptError(e);
-				e2.pos = node.loc.start;
-				e2.message = [
-					e2.message,
-					...[...callStack, { pos: e2.pos }].map(({ pos }, i) => {
-						const name = callStack[i - 1]?.name ?? '<root>';
-						return pos
-							? `  at ${name} (Line ${pos.line}, Column ${pos.column})`
-							: `  at ${name}`;
-					}).reverse(),
-				].join('\n');
-				throw e2;
-			}
-		});
-	}
-
-	@autobind
-	private _evalSync(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		return this.__evalSync(node, scope, callStack);
-	}
-
-	@autobind
-	private async __eval(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		if (this.stop) return NULL;
-		if (this.pausing) await this.pausing.promise;
-		// irqRateが小数の場合は不等間隔になる
-		if (this.irqRate !== 0 && this.stepCount % this.irqRate >= this.irqRate - 1) {
-			await this.irqSleep();
-		}
-		this.stepCount++;
-		if (this.opts.maxStep && this.stepCount > this.opts.maxStep) {
-			throw new AiScriptRuntimeError('max step exceeded');
-		}
-		return dispatch(this.evalContext, node, scope, callStack);
-	}
-	@autobind
-	private __evalSync(node: Ast.Node, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		if (this.stop) return NULL;
-		this.stepCount++;
-		if (this.opts.maxStep && this.stepCount > this.opts.maxStep) {
-			throw new AiScriptRuntimeError('max step exceeded');
-		}
-		return dispatchSync(this.evalContext, node, scope, callStack);
-	}
-	@autobind
-	private async _run(program: Ast.Node[], scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
-		this.log('block:enter', { scope: scope.name });
-
-		let v: Value | Control = NULL;
-
-		for (let i = 0; i < program.length; i++) {
-			const node = program[i]!;
-
-			v = await this._eval(node, scope, callStack);
-			if (v.type === 'return') {
-				this.log('block:return', { scope: scope.name, val: v.value });
-				return v;
-			} else if (v.type === 'break') {
-				this.log('block:break', { scope: scope.name });
-				return v;
-			} else if (v.type === 'continue') {
-				this.log('block:continue', { scope: scope.name });
-				return v;
-			}
-		}
-
-		this.log('block:leave', { scope: scope.name, val: v });
-		return v;
-	}
-
-	@autobind
-	private _runSync(program: Ast.Node[], scope: Scope, callStack: readonly CallInfo[]): Value | Control {
-		this.log('block:enter', { scope: scope.name });
-
-		let v: Value | Control = NULL;
-
-		for (let i = 0; i < program.length; i++) {
-			const node = program[i]!;
-
-			v = this._evalSync(node, scope, callStack);
-			if (v.type === 'return') {
-				this.log('block:return', { scope: scope.name, val: v.value });
-				return v;
-			} else if (v.type === 'break') {
-				this.log('block:break', { scope: scope.name });
-				return v;
-			} else if (v.type === 'continue') {
-				this.log('block:continue', { scope: scope.name });
-				return v;
-			}
-		}
-
-		this.log('block:leave', { scope: scope.name, val: v });
-		return v;
 	}
 
 	@autobind
@@ -608,188 +374,5 @@ export class Interpreter {
 			handler();
 		}
 		this.unpauseHandlers = [];
-	}
-
-	@autobind
-	private async evalAndSetAttr(attr: Ast.Attribute[], value: Value, scope: Scope, callStack: readonly CallInfo[]): Promise<void> {
-		if (attr.length > 0) {
-			const attrs: Value['attr'] = [];
-			for (const nAttr of attr) {
-				const value = await this._eval(nAttr.value, scope, callStack);
-				assertValue(value);
-				attrs.push({
-					name: nAttr.name,
-					value,
-				});
-			}
-			value.attr = attrs;
-		}
-	}
-
-	@autobind
-	private evalAndSetAttrSync(attr: Ast.Attribute[], value: Value, scope: Scope, callStack: readonly CallInfo[]): void {
-		if (attr.length > 0) {
-			const attrs: Value['attr'] = [];
-			for (const nAttr of attr) {
-				const value = this._evalSync(nAttr.value, scope, callStack);
-				assertValue(value);
-				attrs.push({
-					name: nAttr.name,
-					value,
-				});
-			}
-			value.attr = attrs;
-		}
-	}
-
-	@autobind
-	private define(scope: Scope, dest: Ast.Expression, value: Value, isMutable: boolean): void {
-		switch (dest.type) {
-			case 'identifier': {
-				scope.add(dest.name, { isMutable, value });
-				break;
-			}
-			case 'arr': {
-				assertArray(value);
-				dest.value.map(
-					(item, index) => this.define(scope, item, value.value[index] ?? NULL, isMutable),
-				);
-				break;
-			}
-			case 'obj': {
-				assertObject(value);
-				[...dest.value].map(
-					([key, item]) => this.define(scope, item, value.value.get(key) ?? NULL, isMutable),
-				);
-				break;
-			}
-			default: {
-				throw new AiScriptRuntimeError('The left-hand side of an definition expression must be a variable.');
-			}
-		}
-	}
-
-	@autobind
-	private async getReference(dest: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Promise<Reference | Control> {
-		switch (dest.type) {
-			case 'identifier': {
-				return Reference.variable(dest.name, scope);
-			}
-			case 'index': {
-				const assignee = await this._eval(dest.target, scope, callStack);
-				if (isControl(assignee)) {
-					return assignee;
-				}
-				const i = await this._eval(dest.index, scope, callStack);
-				if (isControl(i)) {
-					return i;
-				}
-				if (isArray(assignee)) {
-					assertNumber(i);
-					return Reference.index(assignee, i.value);
-				} else if (isObject(assignee)) {
-					assertString(i);
-					return Reference.prop(assignee, i.value);
-				} else {
-					throw new AiScriptRuntimeError(`Cannot read prop (${reprValue(i)}) of ${assignee.type}.`);
-				}
-			}
-			case 'prop': {
-				const assignee = await this._eval(dest.target, scope, callStack);
-				if (isControl(assignee)) {
-					return assignee;
-				}
-				assertObject(assignee);
-
-				return Reference.prop(assignee, dest.name);
-			}
-			case 'arr': {
-				const items: Reference[] = [];
-				for (const item of dest.value) {
-					const ref = await this.getReference(item, scope, callStack);
-					if (isControl(ref)) {
-						return ref;
-					}
-					items.push(ref);
-				}
-				return Reference.arr(items);
-			}
-			case 'obj': {
-				const entries = new Map<string, Reference>();
-				for (const [key, item] of dest.value.entries()) {
-					const ref = await this.getReference(item, scope, callStack);
-					if (isControl(ref)) {
-						return ref;
-					}
-					entries.set(key, ref);
-				}
-				return Reference.obj(entries);
-			}
-			default: {
-				throw new AiScriptRuntimeError('The left-hand side of an assignment expression must be a variable or a property/index access.');
-			}
-		}
-	}
-
-	@autobind
-	private getReferenceSync(dest: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Reference | Control {
-		switch (dest.type) {
-			case 'identifier': {
-				return Reference.variable(dest.name, scope);
-			}
-			case 'index': {
-				const assignee = this._evalSync(dest.target, scope, callStack);
-				if (isControl(assignee)) {
-					return assignee;
-				}
-				const i = this._evalSync(dest.index, scope, callStack);
-				if (isControl(i)) {
-					return i;
-				}
-				if (isArray(assignee)) {
-					assertNumber(i);
-					return Reference.index(assignee, i.value);
-				} else if (isObject(assignee)) {
-					assertString(i);
-					return Reference.prop(assignee, i.value);
-				} else {
-					throw new AiScriptRuntimeError(`Cannot read prop (${reprValue(i)}) of ${assignee.type}.`);
-				}
-			}
-			case 'prop': {
-				const assignee = this._evalSync(dest.target, scope, callStack);
-				if (isControl(assignee)) {
-					return assignee;
-				}
-				assertObject(assignee);
-
-				return Reference.prop(assignee, dest.name);
-			}
-			case 'arr': {
-				const items: Reference[] = [];
-				for (const item of dest.value) {
-					const ref = this.getReferenceSync(item, scope, callStack);
-					if (isControl(ref)) {
-						return ref;
-					}
-					items.push(ref);
-				}
-				return Reference.arr(items);
-			}
-			case 'obj': {
-				const entries = new Map<string, Reference>();
-				for (const [key, item] of dest.value.entries()) {
-					const ref = this.getReferenceSync(item, scope, callStack);
-					if (isControl(ref)) {
-						return ref;
-					}
-					entries.set(key, ref);
-				}
-				return Reference.obj(entries);
-			}
-			default: {
-				throw new AiScriptRuntimeError('The left-hand side of an assignment expression must be a variable or a property/index access.');
-			}
-		}
 	}
 }

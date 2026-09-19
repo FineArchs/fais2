@@ -1,12 +1,13 @@
 import { isControl, type Control } from '../control.js';
 import { assertArray, assertNumber } from '../util.js';
 import { NULL, NUM, type Value } from '../value.js';
+import { evalNode, evalNodeSync, evalClause, evalClauseSync, run, runSync, define } from './operations.js';
 import type * as Ast from '../../node.js';
 import type { Scope } from '../scope.js';
-import type { CallInfo, EvalContext } from './context.js';
+import type { CallInfo, EvalRuntime } from './runtime.js';
 
 export async function evaluate(
-	context: EvalContext,
+	runtime: EvalRuntime,
 	node: Ast.Node,
 	scope: Scope,
 	callStack: readonly CallInfo[],
@@ -14,7 +15,7 @@ export async function evaluate(
 	switch (node.type) {
 		case 'loop': {
 			while (true) {
-				const v = await context.run(node.statements, scope.createChildScope(), callStack);
+				const v = await run(runtime, node.statements, scope.createChildScope(), callStack);
 				if (v.type === 'break') {
 					if (v.label != null && v.label !== node.label) {
 						return v;
@@ -33,13 +34,13 @@ export async function evaluate(
 
 		case 'for': {
 			if (node.times) {
-				const times = await context.eval(node.times, scope, callStack);
+				const times = await evalNode(runtime, node.times, scope, callStack);
 				if (isControl(times)) {
 					return times;
 				}
 				assertNumber(times);
 				for (let i = 0; i < times.value; i++) {
-					const v = await context.evalClause(node.for, scope, callStack);
+					const v = await evalClause(runtime, node.for, scope, callStack);
 					if (v.type === 'break') {
 						if (v.label != null && v.label !== node.label) {
 							return v;
@@ -54,18 +55,18 @@ export async function evaluate(
 					}
 				}
 			} else {
-				const from = await context.eval(node.from!, scope, callStack);
+				const from = await evalNode(runtime, node.from!, scope, callStack);
 				if (isControl(from)) {
 					return from;
 				}
-				const to = await context.eval(node.to!, scope, callStack);
+				const to = await evalNode(runtime, node.to!, scope, callStack);
 				if (isControl(to)) {
 					return to;
 				}
 				assertNumber(from);
 				assertNumber(to);
 				for (let i = from.value; i < from.value + to.value; i++) {
-					const v = await context.eval(node.for, scope.createChildScope(new Map([
+					const v = await evalNode(runtime, node.for, scope.createChildScope(new Map([
 						[node.var!, {
 							isMutable: false,
 							value: NUM(i),
@@ -89,15 +90,15 @@ export async function evaluate(
 		}
 
 		case 'each': {
-			const items = await context.eval(node.items, scope, callStack);
+			const items = await evalNode(runtime, node.items, scope, callStack);
 			if (isControl(items)) {
 				return items;
 			}
 			assertArray(items);
 			for (const item of items.value) {
 				const eachScope = scope.createChildScope();
-				context.define(eachScope, node.var, item, false);
-				const v = await context.eval(node.for, eachScope, callStack);
+				define(runtime, eachScope, node.var, item, false);
+				const v = await evalNode(runtime, node.for, eachScope, callStack);
 				if (v.type === 'break') {
 					if (v.label != null && v.label !== node.label) {
 						return v;
@@ -119,7 +120,7 @@ export async function evaluate(
 }
 
 export function evaluateSync(
-	context: EvalContext,
+	runtime: EvalRuntime,
 	node: Ast.Node,
 	scope: Scope,
 	callStack: readonly CallInfo[],
@@ -127,7 +128,7 @@ export function evaluateSync(
 	switch (node.type) {
 		case 'loop': {
 			while (true) {
-				const v = context.runSync(node.statements, scope.createChildScope(), callStack);
+				const v = runSync(runtime, node.statements, scope.createChildScope(), callStack);
 				if (v.type === 'break') {
 					if (v.label != null && v.label !== node.label) {
 						return v;
@@ -146,13 +147,13 @@ export function evaluateSync(
 
 		case 'for': {
 			if (node.times) {
-				const times = context.evalSync(node.times, scope, callStack);
+				const times = evalNodeSync(runtime, node.times, scope, callStack);
 				if (isControl(times)) {
 					return times;
 				}
 				assertNumber(times);
 				for (let i = 0; i < times.value; i++) {
-					const v = context.evalClauseSync(node.for, scope, callStack);
+					const v = evalClauseSync(runtime, node.for, scope, callStack);
 					if (v.type === 'break') {
 						if (v.label != null && v.label !== node.label) {
 							return v;
@@ -167,18 +168,18 @@ export function evaluateSync(
 					}
 				}
 			} else {
-				const from = context.evalSync(node.from!, scope, callStack);
+				const from = evalNodeSync(runtime, node.from!, scope, callStack);
 				if (isControl(from)) {
 					return from;
 				}
-				const to = context.evalSync(node.to!, scope, callStack);
+				const to = evalNodeSync(runtime, node.to!, scope, callStack);
 				if (isControl(to)) {
 					return to;
 				}
 				assertNumber(from);
 				assertNumber(to);
 				for (let i = from.value; i < from.value + to.value; i++) {
-					const v = context.evalSync(node.for, scope.createChildScope(new Map([
+					const v = evalNodeSync(runtime, node.for, scope.createChildScope(new Map([
 						[node.var!, {
 							isMutable: false,
 							value: NUM(i),
@@ -202,15 +203,15 @@ export function evaluateSync(
 		}
 
 		case 'each': {
-			const items = context.evalSync(node.items, scope, callStack);
+			const items = evalNodeSync(runtime, node.items, scope, callStack);
 			if (isControl(items)) {
 				return items;
 			}
 			assertArray(items);
 			for (const item of items.value) {
 				const eachScope = scope.createChildScope();
-				context.define(eachScope, node.var, item, false);
-				const v = context.evalSync(node.for, eachScope, callStack);
+				define(runtime, eachScope, node.var, item, false);
+				const v = evalNodeSync(runtime, node.for, eachScope, callStack);
 				if (v.type === 'break') {
 					if (v.label != null && v.label !== node.label) {
 						return v;

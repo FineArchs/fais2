@@ -1,23 +1,24 @@
 import { isControl, type Control } from '../control.js';
 import { assertNumber, isFunction } from '../util.js';
 import { BOOL, NULL, NUM, type Value } from '../value.js';
+import { evalNode, evalNodeSync, define, getReference, getReferenceSync, setAttributes, setAttributesSync } from './operations.js';
 import type * as Ast from '../../node.js';
 import type { Scope } from '../scope.js';
-import type { CallInfo, EvalContext } from './context.js';
+import type { CallInfo, EvalRuntime } from './runtime.js';
 
 export async function evaluate(
-	context: EvalContext,
+	runtime: EvalRuntime,
 	node: Ast.Node,
 	scope: Scope,
 	callStack: readonly CallInfo[],
 ): Promise<Value | Control> {
 	switch (node.type) {
 		case 'def': {
-			const value = await context.eval(node.expr, scope, callStack);
+			const value = await evalNode(runtime, node.expr, scope, callStack);
 			if (isControl(value)) {
 				return value;
 			}
-			await context.setAttributes(node.attr, value, scope, callStack);
+			await setAttributes(runtime, node.attr, value, scope, callStack);
 			if (
 				node.expr.type === 'fn'
 				&& node.dest.type === 'identifier'
@@ -26,7 +27,7 @@ export async function evaluate(
 			) {
 				value.name = node.dest.name;
 			}
-			context.define(scope, node.dest, value, node.mut);
+			define(runtime, scope, node.dest, value, node.mut);
 			return NULL;
 		}
 
@@ -35,11 +36,11 @@ export async function evaluate(
 		}
 
 		case 'assign': {
-			const target = await context.getReference(node.dest, scope, callStack);
+			const target = await getReference(runtime, node.dest, scope, callStack);
 			if (isControl(target)) {
 				return target;
 			}
-			const v = await context.eval(node.expr, scope, callStack);
+			const v = await evalNode(runtime, node.expr, scope, callStack);
 			if (isControl(v)) {
 				return v;
 			}
@@ -50,11 +51,11 @@ export async function evaluate(
 		}
 
 		case 'addAssign': {
-			const target = await context.getReference(node.dest, scope, callStack);
+			const target = await getReference(runtime, node.dest, scope, callStack);
 			if (isControl(target)) {
 				return target;
 			}
-			const v = await context.eval(node.expr, scope, callStack);
+			const v = await evalNode(runtime, node.expr, scope, callStack);
 			if (isControl(v)) {
 				return v;
 			}
@@ -67,11 +68,11 @@ export async function evaluate(
 		}
 
 		case 'subAssign': {
-			const target = await context.getReference(node.dest, scope, callStack);
+			const target = await getReference(runtime, node.dest, scope, callStack);
 			if (isControl(target)) {
 				return target;
 			}
-			const v = await context.eval(node.expr, scope, callStack);
+			const v = await evalNode(runtime, node.expr, scope, callStack);
 			if (isControl(v)) {
 				return v;
 			}
@@ -92,18 +93,18 @@ export async function evaluate(
 }
 
 export function evaluateSync(
-	context: EvalContext,
+	runtime: EvalRuntime,
 	node: Ast.Node,
 	scope: Scope,
 	callStack: readonly CallInfo[],
 ): Value | Control {
 	switch (node.type) {
 		case 'def': {
-			const value = context.evalSync(node.expr, scope, callStack);
+			const value = evalNodeSync(runtime, node.expr, scope, callStack);
 			if (isControl(value)) {
 				return value;
 			}
-			context.setAttributesSync(node.attr, value, scope, callStack);
+			setAttributesSync(runtime, node.attr, value, scope, callStack);
 			if (
 				node.expr.type === 'fn'
 				&& node.dest.type === 'identifier'
@@ -112,7 +113,7 @@ export function evaluateSync(
 			) {
 				value.name = node.dest.name;
 			}
-			context.define(scope, node.dest, value, node.mut);
+			define(runtime, scope, node.dest, value, node.mut);
 			return NULL;
 		}
 
@@ -121,11 +122,11 @@ export function evaluateSync(
 		}
 
 		case 'assign': {
-			const target = context.getReferenceSync(node.dest, scope, callStack);
+			const target = getReferenceSync(runtime, node.dest, scope, callStack);
 			if (isControl(target)) {
 				return target;
 			}
-			const v = context.evalSync(node.expr, scope, callStack);
+			const v = evalNodeSync(runtime, node.expr, scope, callStack);
 			if (isControl(v)) {
 				return v;
 			}
@@ -136,11 +137,11 @@ export function evaluateSync(
 		}
 
 		case 'addAssign': {
-			const target = context.getReferenceSync(node.dest, scope, callStack);
+			const target = getReferenceSync(runtime, node.dest, scope, callStack);
 			if (isControl(target)) {
 				return target;
 			}
-			const v = context.evalSync(node.expr, scope, callStack);
+			const v = evalNodeSync(runtime, node.expr, scope, callStack);
 			if (isControl(v)) {
 				return v;
 			}
@@ -153,11 +154,11 @@ export function evaluateSync(
 		}
 
 		case 'subAssign': {
-			const target = context.getReferenceSync(node.dest, scope, callStack);
+			const target = getReferenceSync(runtime, node.dest, scope, callStack);
 			if (isControl(target)) {
 				return target;
 			}
-			const v = context.evalSync(node.expr, scope, callStack);
+			const v = evalNodeSync(runtime, node.expr, scope, callStack);
 			if (isControl(v)) {
 				return v;
 			}

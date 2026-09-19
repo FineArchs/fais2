@@ -1,58 +1,59 @@
 import { isControl, unWrapLabeledBreak, type Control } from '../control.js';
 import { assertBoolean, eq } from '../util.js';
 import { NULL, type Value } from '../value.js';
+import { evalNode, evalNodeSync, evalClause, evalClauseSync } from './operations.js';
 import type * as Ast from '../../node.js';
 import type { Scope } from '../scope.js';
-import type { CallInfo, EvalContext } from './context.js';
+import type { CallInfo, EvalRuntime } from './runtime.js';
 
 export async function evaluate(
-	context: EvalContext,
+	runtime: EvalRuntime,
 	node: Ast.Node,
 	scope: Scope,
 	callStack: readonly CallInfo[],
 ): Promise<Value | Control> {
 	switch (node.type) {
 		case 'if': {
-			const cond = await context.eval(node.cond, scope, callStack);
+			const cond = await evalNode(runtime, node.cond, scope, callStack);
 			if (isControl(cond)) {
 				return cond;
 			}
 			assertBoolean(cond);
 			if (cond.value) {
-				return unWrapLabeledBreak(await context.evalClause(node.then, scope, callStack), node.label);
+				return unWrapLabeledBreak(await evalClause(runtime, node.then, scope, callStack), node.label);
 			}
 			for (const elseif of node.elseif) {
-				const cond = await context.eval(elseif.cond, scope, callStack);
+				const cond = await evalNode(runtime, elseif.cond, scope, callStack);
 				if (isControl(cond)) {
 					return cond;
 				}
 				assertBoolean(cond);
 				if (cond.value) {
-					return unWrapLabeledBreak(await context.evalClause(elseif.then, scope, callStack), node.label);
+					return unWrapLabeledBreak(await evalClause(runtime, elseif.then, scope, callStack), node.label);
 				}
 			}
 			if (node.else) {
-				return unWrapLabeledBreak(await context.evalClause(node.else, scope, callStack), node.label);
+				return unWrapLabeledBreak(await evalClause(runtime, node.else, scope, callStack), node.label);
 			}
 			return NULL;
 		}
 
 		case 'match': {
-			const about = await context.eval(node.about, scope, callStack);
+			const about = await evalNode(runtime, node.about, scope, callStack);
 			if (isControl(about)) {
 				return about;
 			}
 			for (const qa of node.qs) {
-				const q = await context.eval(qa.q, scope, callStack);
+				const q = await evalNode(runtime, qa.q, scope, callStack);
 				if (isControl(q)) {
 					return q;
 				}
 				if (eq(about, q)) {
-					return unWrapLabeledBreak(await context.evalClause(qa.a, scope, callStack), node.label);
+					return unWrapLabeledBreak(await evalClause(runtime, qa.a, scope, callStack), node.label);
 				}
 			}
 			if (node.default) {
-				return unWrapLabeledBreak(await context.evalClause(node.default, scope, callStack), node.label);
+				return unWrapLabeledBreak(await evalClause(runtime, node.default, scope, callStack), node.label);
 			}
 			return NULL;
 		}
@@ -62,53 +63,53 @@ export async function evaluate(
 }
 
 export function evaluateSync(
-	context: EvalContext,
+	runtime: EvalRuntime,
 	node: Ast.Node,
 	scope: Scope,
 	callStack: readonly CallInfo[],
 ): Value | Control {
 	switch (node.type) {
 		case 'if': {
-			const cond = context.evalSync(node.cond, scope, callStack);
+			const cond = evalNodeSync(runtime, node.cond, scope, callStack);
 			if (isControl(cond)) {
 				return cond;
 			}
 			assertBoolean(cond);
 			if (cond.value) {
-				return unWrapLabeledBreak(context.evalClauseSync(node.then, scope, callStack), node.label);
+				return unWrapLabeledBreak(evalClauseSync(runtime, node.then, scope, callStack), node.label);
 			}
 			for (const elseif of node.elseif) {
-				const cond = context.evalSync(elseif.cond, scope, callStack);
+				const cond = evalNodeSync(runtime, elseif.cond, scope, callStack);
 				if (isControl(cond)) {
 					return cond;
 				}
 				assertBoolean(cond);
 				if (cond.value) {
-					return unWrapLabeledBreak(context.evalClauseSync(elseif.then, scope, callStack), node.label);
+					return unWrapLabeledBreak(evalClauseSync(runtime, elseif.then, scope, callStack), node.label);
 				}
 			}
 			if (node.else) {
-				return unWrapLabeledBreak(context.evalClauseSync(node.else, scope, callStack), node.label);
+				return unWrapLabeledBreak(evalClauseSync(runtime, node.else, scope, callStack), node.label);
 			}
 			return NULL;
 		}
 
 		case 'match': {
-			const about = context.evalSync(node.about, scope, callStack);
+			const about = evalNodeSync(runtime, node.about, scope, callStack);
 			if (isControl(about)) {
 				return about;
 			}
 			for (const qa of node.qs) {
-				const q = context.evalSync(qa.q, scope, callStack);
+				const q = evalNodeSync(runtime, qa.q, scope, callStack);
 				if (isControl(q)) {
 					return q;
 				}
 				if (eq(about, q)) {
-					return unWrapLabeledBreak(context.evalClauseSync(qa.a, scope, callStack), node.label);
+					return unWrapLabeledBreak(evalClauseSync(runtime, qa.a, scope, callStack), node.label);
 				}
 			}
 			if (node.default) {
-				return unWrapLabeledBreak(context.evalClauseSync(node.default, scope, callStack), node.label);
+				return unWrapLabeledBreak(evalClauseSync(runtime, node.default, scope, callStack), node.label);
 			}
 			return NULL;
 		}

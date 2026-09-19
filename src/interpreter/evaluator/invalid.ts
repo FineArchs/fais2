@@ -2,10 +2,10 @@ import { type Control } from '../control.js';
 import { type Value } from '../value.js';
 import type * as Ast from '../../node.js';
 import type { Scope } from '../scope.js';
-import type { CallInfo, EvalContext } from './context.js';
+import type { CallInfo, EvalRuntime } from './runtime.js';
 
 export async function evaluate(
-	context: EvalContext,
+	runtime: EvalRuntime,
 	node: Ast.Node,
 	scope: Scope,
 	callStack: readonly CallInfo[],
@@ -23,7 +23,7 @@ export async function evaluate(
 }
 
 export function evaluateSync(
-	context: EvalContext,
+	runtime: EvalRuntime,
 	node: Ast.Node,
 	scope: Scope,
 	callStack: readonly CallInfo[],

@@ -5,11 +5,13 @@ import { CryptoGen } from '../../utils/random/CryptoGen.js';
 import { GenerateChaCha20Random, GenerateLegacyRandom, GenerateRC4Random } from '../../utils/random/genrng.js';
 import type { Value, VNum, VObj, VStr } from '../value.js';
 
-function getGenRngParams(seed: Value | undefined, options: Value | undefined): {
+function parseParams(
+	seed: Value | undefined,
+	options: Value | undefined,
+): {
 	seed: VNum | VStr;
 	options: VObj | undefined;
 	algo: string;
-	isSecureContext: boolean;
 } {
 	expectAny(seed);
 	const isSecureContext = 'subtle' in crypto;
@@ -22,7 +24,8 @@ function getGenRngParams(seed: Value | undefined, options: Value | undefined): {
 		throw new AiScriptRuntimeError('`options` must be an object if specified.');
 	}
 	if (seed.type !== 'num' && seed.type !== 'str') throw new AiScriptRuntimeError('`seed` must be either number or string.');
-	return { seed, options, algo, isSecureContext };
+	if (!isSecureContext && algo === 'chacha20') throw new AiScriptRuntimeError('chacha20 cannot be used because `crypto.subtle` is not available. Maybe in non-secure context?');
+	return { seed, options, algo };
 }
 
 export const stdMathRnd: Record<`Math:${string}`, Value> = {
@@ -36,16 +39,14 @@ export const stdMathRnd: Record<`Math:${string}`, Value> = {
 
 	'Math:gen_rng': FN_NATIVE({
 		async: async ([seedArg, optionsArg]) => {
-			const { seed, options, algo, isSecureContext } = getGenRngParams(seedArg, optionsArg);
+			const { seed, options, algo } = parseParams(seedArg, optionsArg);
 			switch (algo) {
 				case 'rc4_legacy':
 					return GenerateLegacyRandom(seed);
 				case 'rc4': {
-					if (!isSecureContext) throw new AiScriptRuntimeError(`The random algorithm ${algo} cannot be used because \`crypto.subtle\` is not available. Maybe in non-secure context?`);
 					return GenerateRC4Random(seed);
 				}
 				case 'chacha20': {
-					if (!isSecureContext) throw new AiScriptRuntimeError(`The random algorithm ${algo} cannot be used because \`crypto.subtle\` is not available. Maybe in non-secure context?`);
 					return await GenerateChaCha20Random(seed, options?.value);
 				}
 				default:
@@ -53,12 +54,11 @@ export const stdMathRnd: Record<`Math:${string}`, Value> = {
 			}
 		},
 		sync: ([seedArg, optionsArg]) => {
-			const { seed, algo, isSecureContext } = getGenRngParams(seedArg, optionsArg);
+			const { seed, algo } = parseParams(seedArg, optionsArg);
 			switch (algo) {
 				case 'rc4_legacy':
 					return GenerateLegacyRandom(seed);
 				case 'rc4': {
-					if (!isSecureContext) throw new AiScriptRuntimeError(`The random algorithm ${algo} cannot be used because \`crypto.subtle\` is not available. Maybe in non-secure context?`);
 					return GenerateRC4Random(seed);
 				}
 				case 'chacha20':

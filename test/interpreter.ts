@@ -29,6 +29,47 @@ describe('Scope', () => {
 	});
 });
 
+describe('native function sync execution', () => {
+	test('uses the sync implementation', async () => {
+		const calls: string[] = [];
+		const interpreter = new Interpreter({
+			hostFn: FN_NATIVE({
+				async: async () => { calls.push('async'); },
+				sync: () => { calls.push('sync'); },
+			}),
+		});
+
+		interpreter.execSync(Parser.parse('hostFn()'));
+		await interpreter.exec(Parser.parse('hostFn()'));
+		expect(calls).toEqual(['sync', 'async']);
+	});
+
+	test('rejects an async-only function before invoking it', () => {
+		const invoked = vi.fn();
+		const interpreter = new Interpreter({
+			hostFn: FN_NATIVE({ async: async () => { invoked(); } }),
+		});
+
+		expect(() => interpreter.execSync(Parser.parse('hostFn()')))
+			.toThrow('The function does not support sync mode.');
+		expect(invoked).not.toHaveBeenCalled();
+	});
+
+	test('does not schedule Async:timeout in sync mode', async () => {
+		vi.useFakeTimers();
+		const callback = vi.fn();
+		const interpreter = new Interpreter({
+			callback: FN_NATIVE(callback),
+		});
+
+		expect(() => interpreter.execSync(Parser.parse('Async:timeout(1, callback)')))
+			.toThrow('The function does not support sync mode.');
+		await vi.advanceTimersByTimeAsync(1);
+		expect(callback).not.toHaveBeenCalled();
+		vi.useRealTimers();
+	});
+});
+
 describe('error handler', () => {
 	test.concurrent('error from outside caller', async () => {
 		let outsideCaller: () => Promise<void> = async () => {};
@@ -37,12 +78,12 @@ describe('error handler', () => {
 			emitError: FN_NATIVE((_args, _opts) => {
 				throw Error('emitError');
 			}),
-			genOutsideCaller: FN_NATIVE(([fn], opts) => {
+			genOutsideCaller: FN_NATIVE({ async: ([fn], opts) => {
 				utils.assertFunction(fn);
 				outsideCaller = async () => {
 					await opts.topCall(fn, []);
 				};
-			}),
+			} }),
 		}, {
 			err(e) { /*console.log(e.toString());*/ errCount++; },
 		});

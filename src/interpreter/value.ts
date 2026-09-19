@@ -51,7 +51,11 @@ export type VFnParam = {
  * When your AiScript NATIVE function passes VFn.call to other caller(s) whose error thrown outside the scope, use VFn.topCall instead to keep it under AiScript error control system.
  */
 export type VNativeFn = VFnBase & {
-	native: (args: (Value | undefined)[], opts: {
+	native: NativeFunctionAsync;
+	nativeSync?: NativeFunctionSync;
+};
+
+type NativeFunctionAsync = (args: (Value | undefined)[], opts: {
 		call: (fn: VFn, args: Value[]) => Promise<Value>;
 		topCall: (fn: VFn, args: Value[]) => Promise<Value>;
 		registerAbortHandler: (handler: () => void) => void;
@@ -60,8 +64,9 @@ export type VNativeFn = VFnBase & {
 		unregisterAbortHandler: (handler: () => void) => void;
 		unregisterPauseHandler: (handler: () => void) => void;
 		unregisterUnpauseHandler: (handler: () => void) => void;
-	}) => Value | Promise<Value> | void;
-	nativeSync?: (args: (Value | undefined)[], opts: {
+	}) => Value | Promise<Value | void> | void;
+
+type NativeFunctionSync = (args: (Value | undefined)[], opts: {
 		call: (fn: VFn, args: Value[]) => Value;
 		topCall: (fn: VFn, args: Value[]) => Value;
 		registerAbortHandler: (handler: () => void) => void;
@@ -71,6 +76,10 @@ export type VNativeFn = VFnBase & {
 		unregisterPauseHandler: (handler: () => void) => void;
 		unregisterUnpauseHandler: (handler: () => void) => void;
 	}) => Value | void;
+
+type NativeFunction = NativeFunctionSync | {
+	sync?: NativeFunctionSync;
+	async: NativeFunctionAsync;
 };
 
 export type VError = {
@@ -134,11 +143,22 @@ export const FN = (params: VUserFn['params'], statements: VUserFn['statements'],
 	scope: scope,
 });
 
-export const FN_NATIVE = (fn: VNativeFn['native'], fnSync?: VNativeFn['nativeSync']): VNativeFn => ({
-	type: 'fn' as const,
-	native: fn,
-	nativeSync: fnSync,
-});
+export function FN_NATIVE(fn: NativeFunctionSync): VNativeFn;
+export function FN_NATIVE(fn: { sync?: NativeFunctionSync, async: NativeFunctionAsync }): VNativeFn;
+export function FN_NATIVE(fn: NativeFunction): VNativeFn {
+	if (typeof fn === 'function') {
+		return {
+			type: 'fn' as const,
+			native: fn as unknown as NativeFunctionAsync,
+			nativeSync: fn,
+		};
+	}
+	return {
+		type: 'fn' as const,
+		native: fn.async,
+		nativeSync: fn.sync,
+	};
+}
 
 export const ERROR = (name: string, info?: Value): Value => ({
 	type: 'error' as const,

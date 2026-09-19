@@ -137,15 +137,15 @@ export const std: Record<string, Value> = {
 			return ARR([a]);
 		}
 	}),
-	'Core:sleep': FN_NATIVE(async ([delay]) => {
+	'Core:sleep': FN_NATIVE({ async: async ([delay]) => {
 		assertNumber(delay);
 		await new Promise((r) => setTimeout(r, delay.value));
 		return NULL;
-	}),
-	'Core:abort': FN_NATIVE(async ([message]) => {
+	} }),
+	'Core:abort': FN_NATIVE({ async: async ([message]) => {
 		assertString(message);
 		throw new AiScriptUserError(message.value);
-	}),
+	} }),
 	//#endregion
 
 	//#region Util
@@ -433,7 +433,7 @@ export const std: Record<string, Value> = {
 	//#endregion
 
 	//#region Async
-	'Async:interval': FN_NATIVE(async ([interval, callback, immediate], opts) => {
+	'Async:interval': FN_NATIVE({ async: async ([interval, callback, immediate], opts) => {
 		assertNumber(interval);
 		assertFunction(callback);
 		if (immediate) {
@@ -465,9 +465,9 @@ export const std: Record<string, Value> = {
 			stop();
 			opts.unregisterUnpauseHandler(start);
 		});
-	}),
+	} }),
 
-	'Async:timeout': FN_NATIVE(async ([delay, callback], opts) => {
+	'Async:timeout': FN_NATIVE({ async: async ([delay, callback], opts) => {
 		assertNumber(delay);
 		assertFunction(callback);
 
@@ -497,6 +497,6 @@ export const std: Record<string, Value> = {
 			stop();
 			opts.unregisterUnpauseHandler(start);
 		});
-	}),
+	} }),
 	//#endregion
 };

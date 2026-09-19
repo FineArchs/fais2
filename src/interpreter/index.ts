@@ -53,13 +53,13 @@ export class Interpreter {
 				expectAny(v);
 				if (this.opts.out) this.opts.out(v);
 			}),
-			readline: FN_NATIVE(async args => {
+			readline: FN_NATIVE({ async: async args => {
 				const q = args[0];
 				assertString(q);
 				if (this.opts.in == null) return NULL;
 				const a = await this.opts.in(q.value);
 				return STR(a);
-			}),
+			} }),
 		};
 
 		this.vars = Object.fromEntries(Object.entries({

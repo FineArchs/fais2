@@ -1,4 +1,4 @@
-import { AiScriptError, AiScriptHostsideError, AiScriptRuntimeError, NonAiScriptError } from '../../error.js';
+import { AiScriptError, AiScriptRuntimeError, NonAiScriptError } from '../../error.js';
 import * as Ast from '../../node.js';
 import { assertValue, isControl, unWrapRet, type Control } from '../control.js';
 import { Reference } from '../reference.js';
@@ -131,7 +131,7 @@ export async function call(runtime: EvalRuntime, fn: VFn, args: Value[], callSta
 			unregisterPauseHandler: runtime.unregisterPauseHandler,
 			unregisterUnpauseHandler: runtime.unregisterUnpauseHandler,
 		});
-		return result ?? NULL;
+		return await result ?? NULL;
 	} else {
 		const fnScope = fn.scope.createChildScope();
 		for (const [i, param] of fn.params.entries()) {
@@ -148,7 +148,10 @@ export async function call(runtime: EvalRuntime, fn: VFn, args: Value[], callSta
 export function callSync(runtime: EvalRuntime, fn: VFn, args: Value[], callStack: readonly CallInfo[], pos?: Ast.Pos): Value {
 	if (fn.native) {
 		const info: CallInfo = { name: '<native>', pos };
-		const result = fn.nativeSync ? fn.nativeSync(args, {
+		if (!fn.nativeSync) {
+			throw new AiScriptRuntimeError('The function does not support sync mode.');
+		}
+		const result = fn.nativeSync(args, {
 			call: (fn, args) => callSync(runtime, fn, args, [...callStack, info]),
 			topCall: runtime.execFnSync,
 			registerAbortHandler: runtime.registerAbortHandler,
@@ -157,19 +160,7 @@ export function callSync(runtime: EvalRuntime, fn: VFn, args: Value[], callStack
 			unregisterAbortHandler: runtime.unregisterAbortHandler,
 			unregisterPauseHandler: runtime.unregisterPauseHandler,
 			unregisterUnpauseHandler: runtime.unregisterUnpauseHandler,
-		}) : fn.native(args, {
-			call: (fn, args) => call(runtime, fn, args, [...callStack, info]),
-			topCall: runtime.execFn,
-			registerAbortHandler: runtime.registerAbortHandler,
-			registerPauseHandler: runtime.registerPauseHandler,
-			registerUnpauseHandler: runtime.registerUnpauseHandler,
-			unregisterAbortHandler: runtime.unregisterAbortHandler,
-			unregisterPauseHandler: runtime.unregisterPauseHandler,
-			unregisterUnpauseHandler: runtime.unregisterUnpauseHandler,
 		});
-		if (result instanceof Promise) {
-			throw new AiScriptHostsideError('Native function must not return a Promise in sync mode.');
-		}
 		return result ?? NULL;
 	} else {
 		const fnScope = fn.scope.createChildScope();

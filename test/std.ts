@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest';
 import { utils } from '../src';
 import { AiScriptRuntimeError } from '../src/error';
 import { NUM, STR, NULL, ARR, OBJ, BOOL, TRUE, FALSE, ERROR } from '../src/interpreter/value';
-import { exe, eq } from './testutils';
+import { exe, exeSync, eq } from './testutils';
 
 describe('Core', () => {
 	test.concurrent('range', async () => {
@@ -38,6 +38,10 @@ describe('Core', () => {
 			exe('Core:abort("hoge")'),
 			e => e instanceof Error && e.message.includes('hoge'),
 		);
+	});
+
+	test('abort in sync mode', () => {
+		expect(() => exeSync('Core:abort("hoge")')).toThrow('hoge');
 	});
 });
 
@@ -188,6 +192,15 @@ describe('Math', () => {
 
 	test.concurrent('gen_rng should reject when null is provided as a seed', async () => {
 		await expect(() => exe('Math:gen_rng(null)')).rejects.toThrow(AiScriptRuntimeError);
+	});
+
+	test('gen_rng supports RC4 legacy in sync mode', () => {
+		expect(exeSync('Math:gen_rng(1, { algorithm: "rc4_legacy" })')?.type).toBe('fn');
+	});
+
+	test('gen_rng rejects ChaCha20 in sync mode', () => {
+		expect(() => exeSync('Math:gen_rng(1, { algorithm: "chacha20" })'))
+			.toThrow('chacha20 cannot be used in sync mode.');
 	});
 });
 

@@ -142,7 +142,7 @@ export const std: Record<string, Value> = {
 		await new Promise((r) => setTimeout(r, delay.value));
 		return NULL;
 	}),
-	'Core:abort': FN_NATIVE_ASYNC(async ([message]) => {
+	'Core:abort': FN_NATIVE(([message]) => {
 		assertString(message);
 		throw new AiScriptUserError(message.value);
 	}),

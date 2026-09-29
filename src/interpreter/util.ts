@@ -99,6 +99,55 @@ export function assertNull(val: Value | null | undefined): asserts val is VNull 
 	}
 }
 
+function assertValueType<TLabel extends Value['type']>(
+	val: Value | null | undefined,
+	label: TLabel | readonly TLabel[],
+): asserts val is Value & {
+	type: TLabel;
+} {
+	if (val == null) {
+		const expected = typeof label === 'string' ? label : `(${label.join('|')})`;
+		throw new AiScriptRuntimeError(`Expecting ${expected}, got nothing.`);
+	}
+	if (typeof label === 'string') {
+		if (val.type !== label) {
+			throw new AiScriptRuntimeError(`Expecting ${label}, got ${val.type}.`);
+		}
+		return;
+	}
+	if (label.includes(val.type as TLabel)) return;
+	throw new AiScriptRuntimeError(`Expecting (${label.join('|')}), got ${val.type}.`);
+}
+
+function isValueType<TLabel extends Value['type']>(
+	val: Value,
+	label: TLabel | readonly TLabel[],
+): val is Value & { type: TLabel } {
+	if (typeof label === 'string') return val.type === label;
+	return label.includes(val.type as TLabel);
+}
+
+function mustBeValueType<TLabel extends Value['type']>(
+	val: Value | null | undefined,
+	label: TLabel | readonly TLabel[],
+): Value & { type: TLabel } {
+	assertValueType(val, label);
+	return val;
+}
+
+// assertがあるのでas constは使えない
+type ValueTypeUtil = {
+	assert: typeof assertValueType;
+	is: typeof isValueType;
+	mustBe: typeof mustBeValueType;
+};
+
+export const ValueTypeUtil: ValueTypeUtil = {
+	assert: assertValueType,
+	is: isValueType,
+	mustBe: mustBeValueType,
+};
+
 export function eq(a: Value, b: Value): boolean {
 	if (a.type === 'fn' && b.type === 'fn') return a.native && b.native ? a.native === b.native : a === b;
 	if (a.type === 'fn' || b.type === 'fn') return false;

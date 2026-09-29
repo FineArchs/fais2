@@ -1,5 +1,5 @@
 import { isControl, unWrapLabeledBreak, type Control } from '../control.js';
-import { assertBoolean, eq } from '../util.js';
+import { eq, ValueTypeUtil as V } from '../util.js';
 import { NULL, type Value } from '../value.js';
 import { evalNode, evalNodeSync, evalClause, evalClauseSync } from './operations.js';
 import type { PartialEvaluatorRecord } from './evaluator.js';
@@ -16,7 +16,7 @@ export const libEvalCondition = {
 			if (isControl(cond)) {
 				return cond;
 			}
-			assertBoolean(cond);
+			V.assert(cond, 'bool');
 			if (cond.value) {
 				return unWrapLabeledBreak(await evalClause(runtime, node.then, scope, callStack), node.label);
 			}
@@ -25,7 +25,7 @@ export const libEvalCondition = {
 				if (isControl(cond)) {
 					return cond;
 				}
-				assertBoolean(cond);
+				V.assert(cond, 'bool');
 				if (cond.value) {
 					return unWrapLabeledBreak(await evalClause(runtime, elseif.then, scope, callStack), node.label);
 				}
@@ -45,7 +45,7 @@ export const libEvalCondition = {
 			if (isControl(cond)) {
 				return cond;
 			}
-			assertBoolean(cond);
+			V.assert(cond, 'bool');
 			if (cond.value) {
 				return unWrapLabeledBreak(evalClauseSync(runtime, node.then, scope, callStack), node.label);
 			}
@@ -54,7 +54,7 @@ export const libEvalCondition = {
 				if (isControl(cond)) {
 					return cond;
 				}
-				assertBoolean(cond);
+				V.assert(cond, 'bool');
 				if (cond.value) {
 					return unWrapLabeledBreak(evalClauseSync(runtime, elseif.then, scope, callStack), node.label);
 				}

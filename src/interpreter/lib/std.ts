@@ -1,7 +1,7 @@
 /* eslint-disable no-empty-pattern */
 import { v4 as uuid } from 'uuid';
 import { NUM, STR, FN_NATIVE, FN_NATIVE_ASYNC, FALSE, TRUE, ARR, NULL, BOOL, OBJ, ERROR } from '../value.js';
-import { assertNumber, assertString, assertBoolean, valToJs, jsToVal, assertFunction, assertObject, eq, expectAny, assertArray, reprValue } from '../util.js';
+import { valToJs, jsToVal, eq, expectAny, reprValue, ValueTypeUtil as V } from '../util.js';
 import { AiScriptRuntimeError, AiScriptUserError } from '../../error.js';
 import { VERSION } from '../../constants.js';
 import { textDecoder } from '../../const.js';
@@ -23,7 +23,7 @@ export const std: Record<string, Value> = {
 	'Core:ai': STR('kawaii'),
 
 	'Core:not': FN_NATIVE(([a]) => {
-		assertBoolean(a);
+		V.assert(a, 'bool');
 		return a.value ? FALSE : TRUE;
 	}),
 
@@ -40,78 +40,78 @@ export const std: Record<string, Value> = {
 	}),
 
 	'Core:and': FN_NATIVE(([a, b]) => {
-		assertBoolean(a);
+		V.assert(a, 'bool');
 		if (!a.value) return FALSE;
-		assertBoolean(b);
+		V.assert(b, 'bool');
 		return b.value ? TRUE : FALSE;
 	}),
 
 	'Core:or': FN_NATIVE(([a, b]) => {
-		assertBoolean(a);
+		V.assert(a, 'bool');
 		if (a.value) return TRUE;
-		assertBoolean(b);
+		V.assert(b, 'bool');
 		return b.value ? TRUE : FALSE;
 	}),
 
 	'Core:add': FN_NATIVE(([a, b]) => {
-		assertNumber(a);
-		assertNumber(b);
+		V.assert(a, 'num');
+		V.assert(b, 'num');
 		return NUM(a.value + b.value);
 	}),
 
 	'Core:sub': FN_NATIVE(([a, b]) => {
-		assertNumber(a);
-		assertNumber(b);
+		V.assert(a, 'num');
+		V.assert(b, 'num');
 		return NUM(a.value - b.value);
 	}),
 
 	'Core:mul': FN_NATIVE(([a, b]) => {
-		assertNumber(a);
-		assertNumber(b);
+		V.assert(a, 'num');
+		V.assert(b, 'num');
 		return NUM(a.value * b.value);
 	}),
 
 	'Core:pow': FN_NATIVE(([a, b]) => {
-		assertNumber(a);
-		assertNumber(b);
+		V.assert(a, 'num');
+		V.assert(b, 'num');
 		const res = a.value ** b.value;
 		return NUM(res);
 	}),
 
 	'Core:div': FN_NATIVE(([a, b]) => {
-		assertNumber(a);
-		assertNumber(b);
+		V.assert(a, 'num');
+		V.assert(b, 'num');
 		const res = a.value / b.value;
 		return NUM(res);
 	}),
 
 	'Core:mod': FN_NATIVE(([a, b]) => {
-		assertNumber(a);
-		assertNumber(b);
+		V.assert(a, 'num');
+		V.assert(b, 'num');
 		return NUM(a.value % b.value);
 	}),
 
 	'Core:gt': FN_NATIVE(([a, b]) => {
-		assertNumber(a);
-		assertNumber(b);
+		V.assert(a, 'num');
+		V.assert(b, 'num');
 		return a.value > b.value ? TRUE : FALSE;
 	}),
 
 	'Core:lt': FN_NATIVE(([a, b]) => {
-		assertNumber(a);
-		assertNumber(b);
+		V.assert(a, 'num');
+		V.assert(b, 'num');
 		return a.value < b.value ? TRUE : FALSE;
 	}),
 
 	'Core:gteq': FN_NATIVE(([a, b]) => {
-		assertNumber(a);
-		assertNumber(b);
+		V.assert(a, 'num');
+		V.assert(b, 'num');
 		return a.value >= b.value ? TRUE : FALSE;
 	}),
 
 	'Core:lteq': FN_NATIVE(([a, b]) => {
-		assertNumber(a);
-		assertNumber(b);
+		V.assert(a, 'num');
+		V.assert(b, 'num');
 		return a.value <= b.value ? TRUE : FALSE;
 	}),
 
@@ -127,8 +127,8 @@ export const std: Record<string, Value> = {
 	}),
 
 	'Core:range': FN_NATIVE(([a, b]) => {
-		assertNumber(a);
-		assertNumber(b);
+		V.assert(a, 'num');
+		V.assert(b, 'num');
 		if (a.value < b.value) {
 			return ARR(Array.from({ length: (b.value - a.value) + 1 }, (_, i) => NUM(i + a.value)));
 		} else if (a.value > b.value) {
@@ -138,12 +138,12 @@ export const std: Record<string, Value> = {
 		}
 	}),
 	'Core:sleep': FN_NATIVE_ASYNC(async ([delay]) => {
-		assertNumber(delay);
+		V.assert(delay, 'num');
 		await new Promise((r) => setTimeout(r, delay.value));
 		return NULL;
 	}),
 	'Core:abort': FN_NATIVE(([message]) => {
-		assertString(message);
+		V.assert(message, 'str');
 		throw new AiScriptUserError(message.value);
 	}),
 	//#endregion
@@ -161,7 +161,7 @@ export const std: Record<string, Value> = {
 	}),
 
 	'Json:parse': FN_NATIVE(([json]) => {
-		assertString(json);
+		V.assert(json, 'str');
 		try {
 			return jsToVal(JSON.parse(json.value));
 		} catch (e) {
@@ -170,7 +170,7 @@ export const std: Record<string, Value> = {
 	}),
 
 	'Json:parsable': FN_NATIVE(([str]) => {
-		assertString(str);
+		V.assert(str, 'str');
 		try {
 			JSON.parse(str.value);
 		} catch (e) {
@@ -186,52 +186,52 @@ export const std: Record<string, Value> = {
 	}),
 
 	'Date:year': FN_NATIVE(([v]) => {
-		if (v) { assertNumber(v); }
+		if (v) { V.assert(v, 'num'); }
 		return NUM(new Date(v?.value ?? Date.now()).getFullYear());
 	}),
 
 	'Date:month': FN_NATIVE(([v]) => {
-		if (v) { assertNumber(v); }
+		if (v) { V.assert(v, 'num'); }
 		return NUM(new Date(v?.value ?? Date.now()).getMonth() + 1);
 	}),
 
 	'Date:day': FN_NATIVE(([v]) => {
-		if (v) { assertNumber(v); }
+		if (v) { V.assert(v, 'num'); }
 		return NUM(new Date(v?.value ?? Date.now()).getDate());
 	}),
 
 	'Date:hour': FN_NATIVE(([v]) => {
-		if (v) { assertNumber(v); }
+		if (v) { V.assert(v, 'num'); }
 		return NUM(new Date(v?.value ?? Date.now()).getHours());
 	}),
 
 	'Date:minute': FN_NATIVE(([v]) => {
-		if (v) { assertNumber(v); }
+		if (v) { V.assert(v, 'num'); }
 		return NUM(new Date(v?.value ?? Date.now()).getMinutes());
 	}),
 
 	'Date:second': FN_NATIVE(([v]) => {
-		if (v) { assertNumber(v); }
+		if (v) { V.assert(v, 'num'); }
 		return NUM(new Date(v?.value ?? Date.now()).getSeconds());
 	}),
 
 	'Date:millisecond': FN_NATIVE(([v]) => {
-		if (v) { assertNumber(v); }
+		if (v) { V.assert(v, 'num'); }
 		return NUM(new Date(v?.value ?? Date.now()).getMilliseconds());
 	}),
 
 	'Date:parse': FN_NATIVE(([v]) => {
-		assertString(v);
+		V.assert(v, 'str');
 		const res = new Date(v.value).getTime();
 		// NaN doesn't equal to itself
 		return (res === res) ? NUM(res) : ERROR('not_date');
 	}),
 
 	'Date:to_iso_str': FN_NATIVE(([v, ofs]) => {
-		if (v) { assertNumber(v); }
+		if (v) { V.assert(v, 'num'); }
 		const date = new Date(v?.value ?? Date.now());
 
-		if (ofs) { assertNumber(ofs); }
+		if (ofs) { V.assert(ofs, 'num'); }
 		const offset = ofs?.value ?? -date.getTimezoneOffset();
 		let offset_s: string;
 		if (offset === 0) {
@@ -263,7 +263,7 @@ export const std: Record<string, Value> = {
 
 	//#region Num
 	'Num:from_hex': FN_NATIVE(([v]) => {
-		assertString(v);
+		V.assert(v, 'str');
 		return NUM(parseInt(v.value, 16));
 	}),
 	//#endregion
@@ -272,8 +272,8 @@ export const std: Record<string, Value> = {
 	'Str:lf': STR('\n'),
 
 	'Str:lt': FN_NATIVE(([a, b]) => {
-		assertString(a);
-		assertString(b);
+		V.assert(a, 'str');
+		V.assert(b, 'str');
 		if (a.value < b.value) {
 			return NUM(-1);
 		} else if (a.value === b.value) {
@@ -284,8 +284,8 @@ export const std: Record<string, Value> = {
 	}),
 
 	'Str:gt': FN_NATIVE(([a, b]) => {
-		assertString(a);
-		assertString(b);
+		V.assert(a, 'str');
+		V.assert(b, 'str');
 		if (a.value > b.value) {
 			return NUM(-1);
 		} else if (a.value === b.value) {
@@ -296,23 +296,23 @@ export const std: Record<string, Value> = {
 	}),
 
 	'Str:from_codepoint': FN_NATIVE(([codePoint]) => {
-		assertNumber(codePoint);
+		V.assert(codePoint, 'num');
 
 		return STR(String.fromCodePoint(codePoint.value));
 	}),
 
 	'Str:from_unicode_codepoints': FN_NATIVE(([codePoints]) => {
-		assertArray(codePoints);
+		V.assert(codePoints, 'arr');
 		return STR(Array.from(codePoints.value.map((a) => {
-			assertNumber(a);
+			V.assert(a, 'num');
 			return String.fromCodePoint(a.value);
 		})).join(''));
 	}),
 	
 	'Str:from_utf8_bytes': FN_NATIVE(([bytes]) => {
-		assertArray(bytes);
+		V.assert(bytes, 'arr');
 		return STR(textDecoder.decode(Uint8Array.from(bytes.value.map((a) => {
-			assertNumber(a);
+			V.assert(a, 'num');
 			return a.value;
 		}))));
 	}),
@@ -320,29 +320,29 @@ export const std: Record<string, Value> = {
 
 	//#region Uri
 	'Uri:encode_full': FN_NATIVE(([v]) => {
-		assertString(v);
+		V.assert(v, 'str');
 		return STR(encodeURI(v.value));
 	}),	
 
 	'Uri:encode_component': FN_NATIVE(([v]) => {
-		assertString(v);
+		V.assert(v, 'str');
 		return STR(encodeURIComponent(v.value));
 	}),	
 
 	'Uri:decode_full': FN_NATIVE(([v]) => {
-		assertString(v);
+		V.assert(v, 'str');
 		return STR(decodeURI(v.value));
 	}),
 	
 	'Uri:decode_component': FN_NATIVE(([v]) => {
-		assertString(v);
+		V.assert(v, 'str');
 		return STR(decodeURIComponent(v.value));
 	}),
 	//#endregion
 
 	//#region Arr
 	'Arr:create': FN_NATIVE(([length, initial]) => {
-		assertNumber(length);
+		V.assert(length, 'num');
 		try {
 			return ARR(Array<Value>(length.value).fill(initial ?? NULL));
 		} catch (e) {
@@ -355,69 +355,69 @@ export const std: Record<string, Value> = {
 
 	//#region Obj
 	'Obj:keys': FN_NATIVE(([obj]) => {
-		assertObject(obj);
+		V.assert(obj, 'obj');
 		return ARR(Array.from(obj.value.keys()).map(k => STR(k)));
 	}),
 
 	'Obj:vals': FN_NATIVE(([obj]) => {
-		assertObject(obj);
+		V.assert(obj, 'obj');
 		return ARR(Array.from(obj.value.values()));
 	}),
 
 	'Obj:kvs': FN_NATIVE(([obj]) => {
-		assertObject(obj);
+		V.assert(obj, 'obj');
 		return ARR(Array.from(obj.value.entries()).map(([k, v]) => ARR([STR(k), v])));
 	}),
 
 	'Obj:get': FN_NATIVE(([obj, key]) => {
-		assertObject(obj);
-		assertString(key);
+		V.assert(obj, 'obj');
+		V.assert(key, 'str');
 		return obj.value.get(key.value) ?? NULL;
 	}),
 
 	'Obj:set': FN_NATIVE(([obj, key, value]) => {
-		assertObject(obj);
-		assertString(key);
+		V.assert(obj, 'obj');
+		V.assert(key, 'str');
 		expectAny(value);
 		obj.value.set(key.value, value);
 		return NULL;
 	}),
 
 	'Obj:has': FN_NATIVE(([obj, key]) => {
-		assertObject(obj);
-		assertString(key);
+		V.assert(obj, 'obj');
+		V.assert(key, 'str');
 		return BOOL(obj.value.has(key.value));
 	}),
 
 	'Obj:copy': FN_NATIVE(([obj]) => {
-		assertObject(obj);
+		V.assert(obj, 'obj');
 		return OBJ(new Map(obj.value));
 	}),
 
 	'Obj:merge': FN_NATIVE(([a, b]) => {
-		assertObject(a);
-		assertObject(b);
+		V.assert(a, 'obj');
+		V.assert(b, 'obj');
 		return OBJ(new Map([...a.value, ...b.value]));
 	}),
 
 	'Obj:pick': FN_NATIVE(([obj, keys]) => {
-		assertObject(obj);
-		assertArray(keys);
+		V.assert(obj, 'obj');
+		V.assert(keys, 'arr');
 		return OBJ(new Map(
 			keys.value.map(key => {
-				assertString(key);
+				V.assert(key, 'str');
 				return [key.value, obj.value.get(key.value) ?? NULL];
 			}),
 		));
 	}),
 
 	'Obj:from_kvs': FN_NATIVE(([kvs]) => {
-		assertArray(kvs);
+		V.assert(kvs, 'arr');
 		return OBJ(new Map(
 			kvs.value.map((kv) => {
-				assertArray(kv);
+				V.assert(kv, 'arr');
 				const [key, value] = kv.value;
-				assertString(key);
+				V.assert(key, 'str');
 				expectAny(value);
 				return [key.value, value];
 			}),
@@ -427,17 +427,17 @@ export const std: Record<string, Value> = {
 
 	//#region Error
 	'Error:create': FN_NATIVE(([name, info]) => {
-		assertString(name);
+		V.assert(name, 'str');
 		return ERROR(name.value, info);
 	}),
 	//#endregion
 
 	//#region Async
 	'Async:interval': FN_NATIVE_ASYNC(async ([interval, callback, immediate], opts) => {
-		assertNumber(interval);
-		assertFunction(callback);
+		V.assert(interval, 'num');
+		V.assert(callback, 'fn');
 		if (immediate) {
-			assertBoolean(immediate);
+			V.assert(immediate, 'bool');
 			if (immediate.value) void opts.call(callback, []);
 		}
 
@@ -468,8 +468,8 @@ export const std: Record<string, Value> = {
 	}),
 
 	'Async:timeout': FN_NATIVE_ASYNC(async ([delay, callback], opts) => {
-		assertNumber(delay);
-		assertFunction(callback);
+		V.assert(delay, 'num');
+		V.assert(callback, 'fn');
 
 		let id: ReturnType<typeof setInterval>;
 

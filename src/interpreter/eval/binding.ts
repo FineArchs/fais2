@@ -1,5 +1,5 @@
 import { isControl, type Control } from '../control.js';
-import { assertNumber, isFunction } from '../util.js';
+import { ValueTypeUtil as V } from '../util.js';
 import { BOOL, NULL, NUM, type Value } from '../value.js';
 import { evalNode, evalNodeSync, define, getReference, getReferenceSync, setAttributes, setAttributesSync } from './operations.js';
 import type { PartialEvaluatorRecord } from './evaluator.js';
@@ -20,7 +20,7 @@ export const libEvalBinding = {
 			if (
 				node.expr.type === 'fn'
 		&& node.dest.type === 'identifier'
-		&& isFunction(value)
+		&& V.is(value, 'fn')
 		&& !value.native
 			) {
 				value.name = node.dest.name;
@@ -42,7 +42,7 @@ export const libEvalBinding = {
 			if (
 				node.expr.type === 'fn'
 		&& node.dest.type === 'identifier'
-		&& isFunction(value)
+		&& V.is(value, 'fn')
 		&& !value.native
 			) {
 				value.name = node.dest.name;
@@ -124,9 +124,9 @@ export const libEvalBinding = {
 			if (isControl(v)) {
 				return v;
 			}
-			assertNumber(v);
+			V.assert(v, 'num');
 			const targetValue = target.get();
-			assertNumber(targetValue);
+			V.assert(targetValue, 'num');
 		
 			target.set(NUM(targetValue.value + v.value));
 			return NULL;
@@ -145,9 +145,9 @@ export const libEvalBinding = {
 			if (isControl(v)) {
 				return v;
 			}
-			assertNumber(v);
+			V.assert(v, 'num');
 			const targetValue = target.get();
-			assertNumber(targetValue);
+			V.assert(targetValue, 'num');
 		
 			target.set(NUM(targetValue.value + v.value));
 			return NULL;
@@ -168,9 +168,9 @@ export const libEvalBinding = {
 			if (isControl(v)) {
 				return v;
 			}
-			assertNumber(v);
+			V.assert(v, 'num');
 			const targetValue = target.get();
-			assertNumber(targetValue);
+			V.assert(targetValue, 'num');
 		
 			target.set(NUM(targetValue.value - v.value));
 			return NULL;
@@ -189,9 +189,9 @@ export const libEvalBinding = {
 			if (isControl(v)) {
 				return v;
 			}
-			assertNumber(v);
+			V.assert(v, 'num');
 			const targetValue = target.get();
-			assertNumber(targetValue);
+			V.assert(targetValue, 'num');
 		
 			target.set(NUM(targetValue.value - v.value));
 			return NULL;

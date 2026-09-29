@@ -2,7 +2,7 @@ import { AiScriptError, AiScriptRuntimeError, NonAiScriptError } from '../../err
 import * as Ast from '../../node.js';
 import { assertValue, isControl, unWrapRet, type Control } from '../control.js';
 import { Reference } from '../reference.js';
-import { assertArray, assertFunction, assertNumber, assertObject, assertString, expectAny, isArray, isObject, reprValue } from '../util.js';
+import { expectAny, reprValue, ValueTypeUtil as V } from '../util.js';
 import { NULL, type Value, type VFn } from '../value.js';
 import { dispatch, dispatchSync } from './dispatch.js';
 import type { Scope } from '../scope.js';
@@ -42,7 +42,7 @@ export function evalClauseSync(runtime: EvalRuntime, node: Ast.Statement | Ast.E
 
 export async function evalBinaryOperation(runtime: EvalRuntime, op: string, leftExpr: Ast.Expression, rightExpr: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Promise<Value | Control> {
 	const callee = scope.get(op);
-	assertFunction(callee);
+	V.assert(callee, 'fn');
 	const left = await evalNode(runtime, leftExpr, scope, callStack);
 	if (isControl(left)) {
 		return left;
@@ -56,7 +56,7 @@ export async function evalBinaryOperation(runtime: EvalRuntime, op: string, left
 
 export function evalBinaryOperationSync(runtime: EvalRuntime, op: string, leftExpr: Ast.Expression, rightExpr: Ast.Expression, scope: Scope, callStack: readonly CallInfo[]): Value | Control {
 	const callee = scope.get(op);
-	assertFunction(callee);
+	V.assert(callee, 'fn');
 	const left = evalNodeSync(runtime, leftExpr, scope, callStack);
 	if (isControl(left)) {
 		return left;
@@ -182,14 +182,14 @@ export function define(runtime: EvalRuntime, scope: Scope, dest: Ast.Expression,
 			break;
 		}
 		case 'arr': {
-			assertArray(value);
+			V.assert(value, 'arr');
 			dest.value.map(
 				(item, index) => define(runtime, scope, item, value.value[index] ?? NULL, isMutable),
 			);
 			break;
 		}
 		case 'obj': {
-			assertObject(value);
+			V.assert(value, 'obj');
 			[...dest.value].map(
 				([key, item]) => define(runtime, scope, item, value.value.get(key) ?? NULL, isMutable),
 			);
@@ -215,11 +215,11 @@ export async function getReference(runtime: EvalRuntime, dest: Ast.Expression, s
 			if (isControl(i)) {
 				return i;
 			}
-			if (isArray(assignee)) {
-				assertNumber(i);
+			if (V.is(assignee, 'arr')) {
+				V.assert(i, 'num');
 				return Reference.index(assignee, i.value);
-			} else if (isObject(assignee)) {
-				assertString(i);
+			} else if (V.is(assignee, 'obj')) {
+				V.assert(i, 'str');
 				return Reference.prop(assignee, i.value);
 			} else {
 				throw new AiScriptRuntimeError(`Cannot read prop (${reprValue(i)}) of ${assignee.type}.`);
@@ -230,7 +230,7 @@ export async function getReference(runtime: EvalRuntime, dest: Ast.Expression, s
 			if (isControl(assignee)) {
 				return assignee;
 			}
-			assertObject(assignee);
+			V.assert(assignee, 'obj');
 
 			return Reference.prop(assignee, dest.name);
 		}
@@ -276,11 +276,11 @@ export function getReferenceSync(runtime: EvalRuntime, dest: Ast.Expression, sco
 			if (isControl(i)) {
 				return i;
 			}
-			if (isArray(assignee)) {
-				assertNumber(i);
+			if (V.is(assignee, 'arr')) {
+				V.assert(i, 'num');
 				return Reference.index(assignee, i.value);
-			} else if (isObject(assignee)) {
-				assertString(i);
+			} else if (V.is(assignee, 'obj')) {
+				V.assert(i, 'str');
 				return Reference.prop(assignee, i.value);
 			} else {
 				throw new AiScriptRuntimeError(`Cannot read prop (${reprValue(i)}) of ${assignee.type}.`);
@@ -291,7 +291,7 @@ export function getReferenceSync(runtime: EvalRuntime, dest: Ast.Expression, sco
 			if (isControl(assignee)) {
 				return assignee;
 			}
-			assertObject(assignee);
+			V.assert(assignee, 'obj');
 
 			return Reference.prop(assignee, dest.name);
 		}

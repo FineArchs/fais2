@@ -9,7 +9,7 @@ import { nodeToJs } from '../utils/node-to-js.js';
 import { Scope } from './scope.js';
 import { std } from './lib/std.js';
 import { assertValue } from './control.js';
-import { assertString, expectAny, isFunction } from './util.js';
+import { expectAny, ValueTypeUtil as V } from './util.js';
 import { NULL, FN_NATIVE, FN_NATIVE_ASYNC, STR, ERROR } from './value.js';
 import { Variable } from './variable.js';
 import { call, callSync, define, evalNode, evalNodeSync, log, run, runSync, setAttributes, setAttributesSync } from './eval/operations.js';
@@ -55,7 +55,7 @@ export class Interpreter {
 			}),
 			readline: FN_NATIVE_ASYNC(async args => {
 				const q = args[0];
-				assertString(q);
+				V.assert(q, 'str');
 				if (this.opts.in == null) return NULL;
 				const a = await this.opts.in(q.value);
 				return STR(a);
@@ -253,7 +253,7 @@ export class Interpreter {
 
 					if (
 						node.expr.type === 'fn'
-						&& isFunction(value)
+						&& V.is(value, 'fn')
 						&& !value.native
 					) {
 						value.name = nsScope.getNsPrefix() + node.dest.name;
@@ -297,7 +297,7 @@ export class Interpreter {
 
 					if (
 						node.expr.type === 'fn'
-						&& isFunction(value)
+						&& V.is(value, 'fn')
 						&& !value.native
 					) {
 						value.name = nsScope.getNsPrefix() + node.dest.name;

@@ -1,5 +1,5 @@
 import { isControl, type Control } from '../control.js';
-import { assertArray, assertNumber } from '../util.js';
+import { ValueTypeUtil as V } from '../util.js';
 import { NULL, NUM, type Value } from '../value.js';
 import { evalNode, evalNodeSync, evalClause, evalClauseSync, run, runSync, define } from './operations.js';
 import type { PartialEvaluatorRecord } from './evaluator.js';
@@ -65,7 +65,7 @@ export const libEvalLoop = {
 				if (isControl(times)) {
 					return times;
 				}
-				assertNumber(times);
+				V.assert(times, 'num');
 				for (let i = 0; i < times.value; i++) {
 					const v = await evalClause(runtime, node.for, scope, callStack);
 					if (v.type === 'break') {
@@ -90,8 +90,8 @@ export const libEvalLoop = {
 				if (isControl(to)) {
 					return to;
 				}
-				assertNumber(from);
-				assertNumber(to);
+				V.assert(from, 'num');
+				V.assert(to, 'num');
 				for (let i = from.value; i < from.value + to.value; i++) {
 					const v = await evalNode(runtime, node.for, scope.createChildScope(new Map([
 						[node.var!, {
@@ -126,7 +126,7 @@ export const libEvalLoop = {
 				if (isControl(times)) {
 					return times;
 				}
-				assertNumber(times);
+				V.assert(times, 'num');
 				for (let i = 0; i < times.value; i++) {
 					const v = evalClauseSync(runtime, node.for, scope, callStack);
 					if (v.type === 'break') {
@@ -151,8 +151,8 @@ export const libEvalLoop = {
 				if (isControl(to)) {
 					return to;
 				}
-				assertNumber(from);
-				assertNumber(to);
+				V.assert(from, 'num');
+				V.assert(to, 'num');
 				for (let i = from.value; i < from.value + to.value; i++) {
 					const v = evalNodeSync(runtime, node.for, scope.createChildScope(new Map([
 						[node.var!, {
@@ -188,7 +188,7 @@ export const libEvalLoop = {
 			if (isControl(items)) {
 				return items;
 			}
-			assertArray(items);
+			V.assert(items, 'arr');
 			for (const item of items.value) {
 				const eachScope = scope.createChildScope();
 				define(runtime, eachScope, node.var, item, false);
@@ -218,7 +218,7 @@ export const libEvalLoop = {
 			if (isControl(items)) {
 				return items;
 			}
-			assertArray(items);
+			V.assert(items, 'arr');
 			for (const item of items.value) {
 				const eachScope = scope.createChildScope();
 				define(runtime, eachScope, node.var, item, false);

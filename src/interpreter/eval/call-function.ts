@@ -1,5 +1,5 @@
 import { isControl, type Control } from '../control.js';
-import { assertFunction } from '../util.js';
+import { ValueTypeUtil as V } from '../util.js';
 import { FN, NULL, type Value, type VUserFn } from '../value.js';
 import { evalNode, evalNodeSync, call, callSync } from './operations.js';
 import type { PartialEvaluatorRecord } from './evaluator.js';
@@ -16,7 +16,7 @@ export const libEvalCallFunction = {
 			if (isControl(callee)) {
 				return callee;
 			}
-			assertFunction(callee);
+			V.assert(callee, 'fn');
 			const args = [];
 			for (const expr of node.args) {
 				const arg = await evalNode(runtime, expr, scope, callStack);
@@ -37,7 +37,7 @@ export const libEvalCallFunction = {
 			if (isControl(callee)) {
 				return callee;
 			}
-			assertFunction(callee);
+			V.assert(callee, 'fn');
 			const args = [];
 			for (const expr of node.args) {
 				const arg = evalNodeSync(runtime, expr, scope, callStack);

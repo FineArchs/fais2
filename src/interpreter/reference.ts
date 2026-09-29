@@ -1,5 +1,5 @@
 import { AiScriptIndexOutOfRangeError } from '../error.js';
-import { assertArray, assertObject } from './util.js';
+import { ValueTypeUtil as V } from './util.js';
 import { ARR, NULL, OBJ } from './value.js';
 import type { VArr, VObj, Value } from './value.js';
 import type { Scope } from './scope.js';
@@ -103,7 +103,7 @@ class ArrReference implements Reference {
 	}
 
 	set(value: Value): void {
-		assertArray(value);
+		V.assert(value, 'arr');
 		for (const [index, item] of this.items.entries()) {
 			item.set(value.value[index] ?? NULL);
 		}
@@ -122,7 +122,7 @@ class ObjReference implements Reference {
 	}
 
 	set(value: Value): void {
-		assertObject(value);
+		V.assert(value, 'obj');
 		for (const [key, item] of this.entries.entries()) {
 			item.set(value.value.get(key) ?? NULL);
 		}

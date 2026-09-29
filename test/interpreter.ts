@@ -79,7 +79,7 @@ describe('error handler', () => {
 				throw Error('emitError');
 			}),
 			genOutsideCaller: FN_NATIVE_ASYNC(([fn], opts) => {
-				utils.assertFunction(fn);
+				utils.ValueTypeUtil.assert(fn, 'fn');
 				outsideCaller = async () => {
 					await opts.topCall(fn, []);
 				};

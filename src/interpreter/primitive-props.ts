@@ -2,7 +2,7 @@
 import { substring, length, indexOf, toArray } from 'stringz';
 import { AiScriptRuntimeError } from '../error.js';
 import { textEncoder } from '../const.js';
-import { assertArray, assertBoolean, assertFunction, assertNumber, assertString, expectAny, eq, isArray } from './util.js';
+import { expectAny, eq, ValueTypeUtil as V } from './util.js';
 import { ARR, FALSE, FN_NATIVE, NULL, NUM, STR, TRUE } from './value.js';
 import type { Value, VArr, VFn, VNum, VStr, VError } from './value.js';
 
@@ -60,20 +60,20 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		len: (target: VStr): VNum => NUM(length(target.value)),
 
 		replace: (target: VStr): VFn => FN_NATIVE(([a, b], _opts) => {
-			assertString(a);
-			assertString(b);
+			V.assert(a, 'str');
+			V.assert(b, 'str');
 			return STR(target.value.split(a.value).join(b.value));
 		}),
 
 		index_of: (target: VStr): VFn => FN_NATIVE(([search, fromI], _opts) => {
-			assertString(search);
-			if (fromI) assertNumber(fromI);
+			V.assert(search, 'str');
+			if (fromI) V.assert(fromI, 'num');
 			const pos = fromI ? (fromI.value < 0 ? target.value.length + fromI.value : fromI.value) : undefined;
 			return NUM(indexOf(target.value, search.value, pos));
 		}),
 
 		incl: (target: VStr): VFn => FN_NATIVE(([search], _opts) => {
-			assertString(search);
+			V.assert(search, 'str');
 			return target.value.includes(search.value) ? TRUE : FALSE;
 		}),
 
@@ -90,7 +90,7 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		}),
 
 		split: (target: VStr): VFn => FN_NATIVE(([splitter], _opts) => {
-			if (splitter) assertString(splitter);
+			if (splitter) V.assert(splitter, 'str');
 			if (splitter) {
 				return ARR(target.value.split(splitter ? splitter.value : '').map(s => STR(s)));
 			} else {
@@ -99,20 +99,20 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		}),
 
 		slice: (target: VStr): VFn => FN_NATIVE(([begin, end], _opts) => {
-			assertNumber(begin);
-			assertNumber(end);
+			V.assert(begin, 'num');
+			V.assert(end, 'num');
 			return STR(substring(target.value, begin.value, end.value));
 		}),
 
 		pick: (target: VStr): VFn => FN_NATIVE(([i], _opts) => {
-			assertNumber(i);
+			V.assert(i, 'num');
 			const chars = toArray(target.value);
 			const char = chars[i.value];
 			return char ? STR(char) : NULL;
 		}),
 
 		charcode_at: (target: VStr): VFn => FN_NATIVE(([i], _) => {
-			assertNumber(i);
+			V.assert(i, 'num');
 
 			const res = target.value.charCodeAt(i.value);
 
@@ -120,19 +120,19 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		}),
 
 		codepoint_at: (target: VStr): VFn => FN_NATIVE(([i], _) => {
-			assertNumber(i);
+			V.assert(i, 'num');
 
 			const res = target.value.codePointAt(i.value) ?? target.value.charCodeAt(i.value);
 			return Number.isNaN(res) ? NULL : NUM(res);
 		}),
 
 		starts_with: (target: VStr): VFn => FN_NATIVE(([prefix, start_index], _opts) => {
-			assertString(prefix);
+			V.assert(prefix, 'str');
 			if (!prefix.value) {
 				return TRUE;
 			}
 
-			if (start_index) assertNumber(start_index);
+			if (start_index) V.assert(start_index, 'num');
 			const raw_index = start_index?.value ?? 0;
 			if (raw_index < -target.value.length || raw_index > target.value.length) {
 				return FALSE;
@@ -142,12 +142,12 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		}),
 
 		ends_with: (target: VStr): VFn => FN_NATIVE(([suffix, end_index], _opts) => {
-			assertString(suffix);
+			V.assert(suffix, 'str');
 			if (!suffix.value) {
 				return TRUE;
 			}
 
-			if (end_index) assertNumber(end_index);
+			if (end_index) V.assert(end_index, 'num');
 			const raw_index = end_index?.value ?? target.value.length;
 			if (raw_index < -target.value.length || raw_index > target.value.length) {
 				return FALSE;
@@ -158,15 +158,15 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		}),
 
 		pad_start: (target: VStr): VFn => FN_NATIVE(([width, pad], _) => {
-			assertNumber(width);
-			const s = (pad) ? (assertString(pad), pad.value) : ' ';
+			V.assert(width, 'num');
+			const s = (pad) ? (V.assert(pad, 'str'), pad.value) : ' ';
 
 			return STR(target.value.padStart(width.value, s));
 		}),
 
 		pad_end: (target: VStr): VFn => FN_NATIVE(([width, pad], _) => {
-			assertNumber(width);
-			const s = (pad) ? (assertString(pad), pad.value) : ' ';
+			V.assert(width, 'num');
+			const s = (pad) ? (V.assert(pad, 'str'), pad.value) : ' ';
 
 			return STR(target.value.padEnd(width.value, s));
 		}),
@@ -196,29 +196,29 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		}),
 
 		concat: (target: VArr): VFn => FN_NATIVE(([x], _opts) => {
-			assertArray(x);
+			V.assert(x, 'arr');
 			return ARR(target.value.concat(x.value));
 		}),
 
 		slice: (target: VArr): VFn => FN_NATIVE(([begin, end], _opts) => {
-			assertNumber(begin);
-			assertNumber(end);
+			V.assert(begin, 'num');
+			V.assert(end, 'num');
 			return ARR(target.value.slice(begin.value, end.value));
 		}),
 
 		join: (target: VArr): VFn => FN_NATIVE(([joiner], _opts) => {
-			if (joiner) assertString(joiner);
+			if (joiner) V.assert(joiner, 'str');
 			return STR(target.value.map(i => i.type === 'str' ? i.value : '').join(joiner ? joiner.value : ''));
 		}),
 
 		map: (target: VArr): VFn => FN_NATIVE({ async: async ([fn], opts) => {
-			assertFunction(fn);
+			V.assert(fn, 'fn');
 			const vals = target.value.map(async (item, i) => {
 				return await opts.call(fn, [item, NUM(i)]);
 			});
 			return ARR(await Promise.all(vals));
 		}, sync: ([fn], opts) => {
-			assertFunction(fn);
+			V.assert(fn, 'fn');
 			const vals = target.value.map((item, i) => {
 				return opts.call(fn, [item, NUM(i)]);
 			});
@@ -226,29 +226,29 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		} }),
 
 		filter: (target: VArr): VFn => FN_NATIVE({ async: async ([fn], opts) => {
-			assertFunction(fn);
+			V.assert(fn, 'fn');
 			const vals = [] as Value[];
 			for (let i = 0; i < target.value.length; i++) {
 				const item = target.value[i]!;
 				const res = await opts.call(fn, [item, NUM(i)]);
-				assertBoolean(res);
+				V.assert(res, 'bool');
 				if (res.value) vals.push(item);
 			}
 			return ARR(vals);
 		}, sync: ([fn], opts) => {
-			assertFunction(fn);
+			V.assert(fn, 'fn');
 			const vals = [] as Value[];
 			for (let i = 0; i < target.value.length; i++) {
 				const item = target.value[i]!;
 				const res = opts.call(fn, [item, NUM(i)]);
-				assertBoolean(res);
+				V.assert(res, 'bool');
 				if (res.value) vals.push(item);
 			}
 			return ARR(vals);
 		} }),
 
 		reduce: (target: VArr): VFn => FN_NATIVE({ async: async ([fn, initialValue], opts) => {
-			assertFunction(fn);
+			V.assert(fn, 'fn');
 			const withInitialValue = initialValue != null;
 			if (!withInitialValue && (target.value.length === 0)) throw new AiScriptRuntimeError('Reduce of empty array without initial value');
 			let accumulator = withInitialValue ? initialValue : target.value[0]!;
@@ -258,7 +258,7 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 			}
 			return accumulator;
 		}, sync: ([fn, initialValue], opts) => {
-			assertFunction(fn);
+			V.assert(fn, 'fn');
 			const withInitialValue = initialValue != null;
 			if (!withInitialValue && (target.value.length === 0)) throw new AiScriptRuntimeError('Reduce of empty array without initial value');
 			let accumulator = withInitialValue ? initialValue : target.value[0]!;
@@ -270,20 +270,20 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		} }),
 
 		find: (target: VArr): VFn => FN_NATIVE({ async: async ([fn], opts) => {
-			assertFunction(fn);
+			V.assert(fn, 'fn');
 			for (let i = 0; i < target.value.length; i++) {
 				const item = target.value[i]!;
 				const res = await opts.call(fn, [item, NUM(i)]);
-				assertBoolean(res);
+				V.assert(res, 'bool');
 				if (res.value) return item;
 			}
 			return NULL;
 		}, sync: ([fn], opts) => {
-			assertFunction(fn);
+			V.assert(fn, 'fn');
 			for (let i = 0; i < target.value.length; i++) {
 				const item = target.value[i]!;
 				const res = opts.call(fn, [item, NUM(i)]);
-				assertBoolean(res);
+				V.assert(res, 'bool');
 				if (res.value) return item;
 			}
 			return NULL;
@@ -297,7 +297,7 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		index_of: (target: VArr): VFn => FN_NATIVE(([val, fromI], _opts) => {
 			expectAny(val);
 			if (fromI) {
-				assertNumber(fromI);
+				V.assert(fromI, 'num');
 				const offset = target.value.slice(0, fromI.value).length;
 				const result = target.value.slice(fromI.value).findIndex(v => eq(v, val));
 				return NUM(result < 0 ? result : result + offset);
@@ -331,7 +331,7 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 					const l = left[leftIndex]!;
 					const r = right[rightIndex]!;
 					const compValue = await opts.call(comp, [l, r]);
-					assertNumber(compValue);
+					V.assert(compValue, 'num');
 					if (compValue.value <= 0) {
 						result.push(left[leftIndex]!);
 						leftIndex++;
@@ -343,8 +343,8 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 				return result.concat(left.slice(leftIndex)).concat(right.slice(rightIndex));
 			};
 
-			assertFunction(comp);
-			assertArray(target);
+			V.assert(comp, 'fn');
+			V.assert(target, 'arr');
 			target.value = await mergeSort(target.value, comp);
 			return target;
 		}, sync: ([comp], opts) => {
@@ -363,7 +363,7 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 					const l = left[leftIndex]!;
 					const r = right[rightIndex]!;
 					const compValue = opts.call(comp, [l, r]);
-					assertNumber(compValue);
+					V.assert(compValue, 'num');
 					if (compValue.value <= 0) {
 						result.push(left[leftIndex]!);
 						leftIndex++;
@@ -375,22 +375,22 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 				return result.concat(left.slice(leftIndex)).concat(right.slice(rightIndex));
 			};
 
-			assertFunction(comp);
-			assertArray(target);
+			V.assert(comp, 'fn');
+			V.assert(target, 'arr');
 			target.value = mergeSort(target.value, comp);
 			return target;
 		} }),
 		
 		fill: (target: VArr): VFn => FN_NATIVE(([val, st, ed], opts) => {
 			const value = val ?? NULL;
-			const start = st && (assertNumber(st), st.value);
-			const end = ed && (assertNumber(ed), ed.value);
+			const start = st && (V.assert(st, 'num'), st.value);
+			const end = ed && (V.assert(ed, 'num'), ed.value);
 			target.value.fill(value, start, end);
 			return target;
 		}),
 
 		repeat: (target: VArr): VFn => FN_NATIVE(([times], opts) => {
-			assertNumber(times);
+			V.assert(times, 'num');
 			try {
 				return ARR(Array<Value[]>(times.value).fill(target.value).flat());
 			} catch (e) {
@@ -401,16 +401,16 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		}),
 		
 		splice: (target: VArr): VFn => FN_NATIVE(([idx, rc, vs], opts) => {
-			assertNumber(idx);
+			V.assert(idx, 'num');
 			const index = (idx.value < -target.value.length) ? 0
 				: (idx.value < 0) ? target.value.length + idx.value
 				: (idx.value >= target.value.length) ? target.value.length
 				: idx.value;
 
-			const remove_count = (rc != null) ? (assertNumber(rc), rc.value)
+			const remove_count = (rc != null) ? (V.assert(rc, 'num'), rc.value)
 				: target.value.length - index;
 
-			const items = (vs != null) ? (assertArray(vs), vs.value) : [];
+			const items = (vs != null) ? (V.assert(vs, 'arr'), vs.value) : [];
 
 			const result = target.value.splice(index, remove_count, ...items);
 			return ARR(result);
@@ -418,7 +418,7 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 
 		flat: (target: VArr): VFn => FN_NATIVE(([depth_], opts) => {
 			const depth = depth_ ?? NUM(1);
-			assertNumber(depth);
+			V.assert(depth, 'num');
 			if (!Number.isInteger(depth.value)) throw new AiScriptRuntimeError('arr.flat expected integer, got non-integer');
 			if (depth.value < 0) throw new AiScriptRuntimeError('arr.flat expected non-negative number, got negative');
 			const flat = (arr: Value[], depth: number, result: Value[]) => {
@@ -427,7 +427,7 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 					return;
 				}
 				for (const v of arr) {
-					if (isArray(v)) {
+					if (V.is(v, 'arr')) {
 						flat(v.value, depth - 1, result);
 					} else {
 						result.push(v);
@@ -440,65 +440,65 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		}),
 
 		flat_map: (target: VArr): VFn => FN_NATIVE({ async: async ([fn], opts) => {
-			assertFunction(fn);
+			V.assert(fn, 'fn');
 			const vals = target.value.map(async (item, i) => {
 				const result = await opts.call(fn, [item, NUM(i)]);
-				return isArray(result) ? result.value : result;
+				return V.is(result, 'arr') ? result.value : result;
 			});
 			const mapped_vals = await Promise.all(vals);
 			return ARR(mapped_vals.flat());
 		}, sync: ([fn], opts) => {
-			assertFunction(fn);
+			V.assert(fn, 'fn');
 			const vals = target.value.map((item, i) => {
 				const result = opts.call(fn, [item, NUM(i)]);
-				return isArray(result) ? result.value : result;
+				return V.is(result, 'arr') ? result.value : result;
 			});
 			const mapped_vals = vals;
 			return ARR(mapped_vals.flat());
 		} }),
 
 		every: (target: VArr): VFn => FN_NATIVE({ async: async ([fn], opts) => {
-			assertFunction(fn);
+			V.assert(fn, 'fn');
 			for (let i = 0; i < target.value.length; i++) {
 				const item = target.value[i]!;
 				const res = await opts.call(fn, [item, NUM(i)]);
-				assertBoolean(res);
+				V.assert(res, 'bool');
 				if (!res.value) return FALSE;
 			}
 			return TRUE;
 		}, sync: ([fn], opts) => {
-			assertFunction(fn);
+			V.assert(fn, 'fn');
 			for (let i = 0; i < target.value.length; i++) {
 				const item = target.value[i]!;
 				const res = opts.call(fn, [item, NUM(i)]);
-				assertBoolean(res);
+				V.assert(res, 'bool');
 				if (!res.value) return FALSE;
 			}
 			return TRUE;
 		} }),
 
 		some: (target: VArr): VFn => FN_NATIVE({ async: async ([fn], opts) => {
-			assertFunction(fn);
+			V.assert(fn, 'fn');
 			for (let i = 0; i < target.value.length; i++) {
 				const item = target.value[i]!;
 				const res = await opts.call(fn, [item, NUM(i)]);
-				assertBoolean(res);
+				V.assert(res, 'bool');
 				if (res.value) return TRUE;
 			}
 			return FALSE;
 		}, sync: ([fn], opts) => {
-			assertFunction(fn);
+			V.assert(fn, 'fn');
 			for (let i = 0; i < target.value.length; i++) {
 				const item = target.value[i]!;
 				const res = opts.call(fn, [item, NUM(i)]);
-				assertBoolean(res);
+				V.assert(res, 'bool');
 				if (res.value) return TRUE;
 			}
 			return FALSE;
 		} }),
 
 		insert: (target: VArr): VFn => FN_NATIVE(([index, item], opts) => {
-			assertNumber(index);
+			V.assert(index, 'num');
 			expectAny(item);
 
 			target.value.splice(index.value, 0, item);
@@ -507,7 +507,7 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		}),
 
 		remove: (target: VArr): VFn => FN_NATIVE(([index], opts) => {
-			assertNumber(index);
+			V.assert(index, 'num');
 
 			const removed = target.value.splice(index.value, 1);
 
@@ -515,7 +515,7 @@ const PRIMITIVE_PROPS: PrimitiveProps = {
 		}),
 
 		at: (target: VArr): VFn => FN_NATIVE(([index, otherwise], opts) => {
-			assertNumber(index);
+			V.assert(index, 'num');
 			return target.value.at(index.value) ?? otherwise ?? NULL;
 		}),
 	},

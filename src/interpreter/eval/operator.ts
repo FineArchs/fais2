@@ -1,5 +1,5 @@
 import { isControl, type Control } from '../control.js';
-import { assertBoolean, assertNumber } from '../util.js';
+import { ValueTypeUtil as V } from '../util.js';
 import { BOOL, NUM, type Value } from '../value.js';
 import { evalNode, evalNodeSync, evalBinaryOperation, evalBinaryOperationSync } from './operations.js';
 import type { PartialEvaluatorRecord } from './evaluator.js';
@@ -16,7 +16,7 @@ export const libEvalOperator = {
 			if (isControl(v)) {
 				return v;
 			}
-			assertNumber(v);
+			V.assert(v, 'num');
 			return v;
 		},
 		sync: (
@@ -29,7 +29,7 @@ export const libEvalOperator = {
 			if (isControl(v)) {
 				return v;
 			}
-			assertNumber(v);
+			V.assert(v, 'num');
 			return v;
 		},
 	},
@@ -44,7 +44,7 @@ export const libEvalOperator = {
 			if (isControl(v)) {
 				return v;
 			}
-			assertNumber(v);
+			V.assert(v, 'num');
 			return NUM(-v.value);
 		},
 		sync: (
@@ -57,7 +57,7 @@ export const libEvalOperator = {
 			if (isControl(v)) {
 				return v;
 			}
-			assertNumber(v);
+			V.assert(v, 'num');
 			return NUM(-v.value);
 		},
 	},
@@ -72,7 +72,7 @@ export const libEvalOperator = {
 			if (isControl(v)) {
 				return v;
 			}
-			assertBoolean(v);
+			V.assert(v, 'bool');
 			return BOOL(!v.value);
 		},
 		sync: (
@@ -85,7 +85,7 @@ export const libEvalOperator = {
 			if (isControl(v)) {
 				return v;
 			}
-			assertBoolean(v);
+			V.assert(v, 'bool');
 			return BOOL(!v.value);
 		},
 	},
@@ -316,7 +316,7 @@ export const libEvalOperator = {
 			if (isControl(leftValue)) {
 				return leftValue;
 			}
-			assertBoolean(leftValue);
+			V.assert(leftValue, 'bool');
 		
 			if (!leftValue.value) {
 				return leftValue;
@@ -325,7 +325,7 @@ export const libEvalOperator = {
 				if (isControl(rightValue)) {
 					return rightValue;
 				}
-				assertBoolean(rightValue);
+				V.assert(rightValue, 'bool');
 				return rightValue;
 			}
 		},
@@ -339,7 +339,7 @@ export const libEvalOperator = {
 			if (isControl(leftValue)) {
 				return leftValue;
 			}
-			assertBoolean(leftValue);
+			V.assert(leftValue, 'bool');
 		
 			if (!leftValue.value) {
 				return leftValue;
@@ -348,7 +348,7 @@ export const libEvalOperator = {
 				if (isControl(rightValue)) {
 					return rightValue;
 				}
-				assertBoolean(rightValue);
+				V.assert(rightValue, 'bool');
 				return rightValue;
 			}
 		},
@@ -364,7 +364,7 @@ export const libEvalOperator = {
 			if (isControl(leftValue)) {
 				return leftValue;
 			}
-			assertBoolean(leftValue);
+			V.assert(leftValue, 'bool');
 		
 			if (leftValue.value) {
 				return leftValue;
@@ -373,7 +373,7 @@ export const libEvalOperator = {
 				if (isControl(rightValue)) {
 					return rightValue;
 				}
-				assertBoolean(rightValue);
+				V.assert(rightValue, 'bool');
 				return rightValue;
 			}
 		},
@@ -387,7 +387,7 @@ export const libEvalOperator = {
 			if (isControl(leftValue)) {
 				return leftValue;
 			}
-			assertBoolean(leftValue);
+			V.assert(leftValue, 'bool');
 		
 			if (leftValue.value) {
 				return leftValue;
@@ -396,7 +396,7 @@ export const libEvalOperator = {
 				if (isControl(rightValue)) {
 					return rightValue;
 				}
-				assertBoolean(rightValue);
+				V.assert(rightValue, 'bool');
 				return rightValue;
 			}
 		},

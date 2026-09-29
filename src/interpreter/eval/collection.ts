@@ -1,7 +1,7 @@
 import { AiScriptIndexOutOfRangeError, AiScriptRuntimeError } from '../../error.js';
 import { isControl, type Control } from '../control.js';
 import { getPrimProp } from '../primitive-props.js';
-import { assertNumber, assertString, isArray, isObject, reprValue } from '../util.js';
+import { reprValue, ValueTypeUtil as V } from '../util.js';
 import { ARR, NULL, OBJ, STR, type Value } from '../value.js';
 import { evalNode, evalNodeSync } from './operations.js';
 import type { PartialEvaluatorRecord } from './evaluator.js';
@@ -86,7 +86,7 @@ export const libEvalCollection = {
 			if (isControl(target)) {
 				return target;
 			}
-			if (isObject(target)) {
+			if (V.is(target, 'obj')) {
 				if (target.value.has(node.name)) {
 					return target.value.get(node.name)!;
 				} else {
@@ -106,7 +106,7 @@ export const libEvalCollection = {
 			if (isControl(target)) {
 				return target;
 			}
-			if (isObject(target)) {
+			if (V.is(target, 'obj')) {
 				if (target.value.has(node.name)) {
 					return target.value.get(node.name)!;
 				} else {
@@ -132,15 +132,15 @@ export const libEvalCollection = {
 			if (isControl(i)) {
 				return i;
 			}
-			if (isArray(target)) {
-				assertNumber(i);
+			if (V.is(target, 'arr')) {
+				V.assert(i, 'num');
 				const item = target.value[i.value];
 				if (item === undefined) {
 					throw new AiScriptIndexOutOfRangeError(`Index out of range. index: ${i.value} max: ${target.value.length - 1}`);
 				}
 				return item;
-			} else if (isObject(target)) {
-				assertString(i);
+			} else if (V.is(target, 'obj')) {
+				V.assert(i, 'str');
 				if (target.value.has(i.value)) {
 					return target.value.get(i.value)!;
 				} else {
@@ -164,15 +164,15 @@ export const libEvalCollection = {
 			if (isControl(i)) {
 				return i;
 			}
-			if (isArray(target)) {
-				assertNumber(i);
+			if (V.is(target, 'arr')) {
+				V.assert(i, 'num');
 				const item = target.value[i.value];
 				if (item === undefined) {
 					throw new AiScriptIndexOutOfRangeError(`Index out of range. index: ${i.value} max: ${target.value.length - 1}`);
 				}
 				return item;
-			} else if (isObject(target)) {
-				assertString(i);
+			} else if (V.is(target, 'obj')) {
+				V.assert(i, 'str');
 				if (target.value.has(i.value)) {
 					return target.value.get(i.value)!;
 				} else {
